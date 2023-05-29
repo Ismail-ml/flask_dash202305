@@ -1,0 +1,58 @@
+@app.route("/result", methods=['POST'])
+def result():
+    df=dd.read_hdf(r"C:\Users\ismayilm\Downloads\Python\Practice\PRB_Utilization\UPMS\noki_agr.hdf",key='/data')
+    df['PERIOD_START_TIME']=dd.to_datetime(df['PERIOD_START_TIME'], format='%m.%d.%Y %H:%M:%S')
+
+    grp=[]
+    kpi={'DCR':"'drop_rate_num','drop_rate_den'",
+         'HOSR':"'hosr_num','hosr_den'",
+         'Avail':"'tch_avail_num','tch_avail_den'"}
+    formula={'DCR':"tt['drop_rate_num']/tt['drop_rate_den']*100",
+         'HOSR':"tt['hosr_num']/tt['hosr_den']*100",
+         'Avail':"tt['tch_avail_num']/tt['tch_avail_den']*100"}
+    if len(request.form.getlist("Clusterlist"))>=5:
+        NeSelected=request.form.getlist("Clusterlist")
+        filt=str("(df['BTS name'].apply(lambda x: x[:8]).isin(NeSelected))")
+    elif len(request.form.getlist("BSClist"))!=0:
+        NeSelected=request.form.getlist("BSClist")
+        filt=str("(df['BSC name'].isin(NeSelected))")
+    elif len(request.form.getlist("Regionlist"))!=0:
+        NeSelected=request.form.getlist("Regionlist")
+    elif len(request.form.getlist("Vendorlist"))!=0:
+        NeSelected=request.form.getlist("Vendorlist")
+    elif len(request.form.getlist("Sitelist"))!=0:
+        NeSelected=request.form.getlist("Sitelist")
+        filt=str("(df['BTS name'].apply(lambda x: x[:8]).isin(NeSelected))")
+    ReportLevel=request.form.get("report_level")
+    TimeLevel=request.form.get("time_resolution")
+    StartDate=request.form.get("start_date")
+    EndDate=request.form.get("end_date")
+    KPIselected=request.form.getlist("KPIlist")
+
+    filt= filt + ' & ' + str("(df['PERIOD_START_TIME']>StartDate)") + ' & ' + str("(df['PERIOD_START_TIME']<EndDate)")
+    df['Site name']=df['BTS name'].apply(lambda x: x[:8])
+    grp.append(ReportLevel+' name')
+    if len(request.form.getlist("Clusterlist"))>=5:
+        grp=[]
+    class MyStr(str):
+        """ Special string subclass to override the default representation method
+            which puts single quotes around the result.
+        """
+    def __repr__(self):
+        return super(MyStr, self).__repr__().strip('"')
+    df=df[eval(MyStr(filt))].compute()
+    if TimeLevel=='Daily':
+        grp.append(pd.DatetimeIndex(df['PERIOD_START_TIME']).strftime('%d.%m.%Y'))
+    else: grp.append(df['PERIOD_START_TIME'])
+    p=[]
+    [[p.append(j) for j in eval(MyStr(kpi[i]))] for i in KPIselected]
+    tt=pd.DataFrame(df.groupby(grp)[p].sum())
+    ff=pd.DataFrame([round(eval(MyStr(formula[d]),{},{'tt':tt}),2) for d in KPIselected],index=KPIselected).T
+    ff.index.rename('Period', level=1,inplace=True)
+    ff.reset_index(inplace=True)
+    if request.form.get("direct_export")=='Yes':
+
+        return send_file(filename_or_fp=r'C:\Users\ismayilm\Downloads\Python\Practice\PRB_Utilization\UPMS\result.csv',as_attachment=True,attachment_filename='result.csv',mimetype='/text-csv')
+
+    else:
+        return render_template('result.html',data=ff.to_dict(orient='records'), titles=ff.columns.values)

@@ -1,0 +1,176 @@
+import pandas as pd
+from dash.dependencies import Input, Output, State
+from plotly import tools
+from plotly.subplots import make_subplots
+import dash
+import dash_html_components as html
+import dash_core_components as dcc
+import plotly.express as px
+import plotly.graph_objs as go
+import dash_table
+from datetime import datetime as dt
+import datetime
+import numpy as np
+from dateutil.relativedelta import relativedelta
+from datetime import datetime as dt
+import os
+
+
+today=datetime.date.today()-datetime.timedelta(15)
+needed=dt.strptime(dt.strftime(dt.now()-datetime.timedelta(hours=1),'%d.%m.%y %H:00'),'%d.%m.%y %H:00')
+def read_files():
+
+    higher_df = pd.read_csv(r'd:\disk_E\Desktop\Export\Python\1\Anomality\anomalies_higher_level.csv')
+    site_df = pd.read_csv(r'd:\disk_E\Desktop\Export\Python\1\Anomality\anomalies_site_level.csv')
+    trend_df = pd.read_csv(r'd:\disk_E\Desktop\Export\Python\1\Anomality\anomalies_trend.csv')
+    trend_df_higher = pd.read_csv(r'd:\disk_E\Desktop\Export\Python\1\Anomality\anomalies_trend_higher.csv')
+    #trend_df= pd.read_csv(r'd:\disk_E\Desktop\Export\Python\1\Anomality\anomalies_trend_'+dt.strftime(needed,'%Y-%m-%d %H')+'.csv')
+    higher_df=higher_df[higher_df['variable'].isin(
+        ['Call Setup SR', 'Call Drop Rate', 'Call Block Rate', 'SDCCH Drop Rate', 'SDCCH Block Rate', 'Handover SR',
+         'Cell Availability excl blck', 'TCH Availability', 'SDCCH Availability', 'TBF Est SR', 'TBF Drop Rate',
+         'Voice Call Setup SR','Voice Call DR', 'HSDPA RAB SR', 'HSUPA RAB SR', 'HSDPA Drop Rate', 'HSUPA Drop Rate',
+         'CS Soft HOSR','PS Soft HOSR','CS IRAT HOSR', 'CS InterFreq HOSR', 'PS InterFreq HOSR', 'Average HSDPA user thrp, Kbps',
+         'Session Setup SR','CSFB SR','Session Drop Rate', 'IntraFreq HOSR', '4G-3G IRAT HOSR', 'DL Throughput, Kbps',
+         'UL Throughput, Kbps'])]
+    site_df=site_df[site_df['variable'].isin(['Call Setup SR','Call Drop Rate','Call Block Rate','SDCCH Drop Rate','SDCCH Block Rate',
+        'Handover SR','Cell Availability excl blck','TCH Availability','SDCCH Availability','TBF Est SR','TBF Drop Rate',
+        'Voice Call Setup SR','Voice Call DR','HSDPA RAB SR','HSUPA RAB SR','HSDPA Drop Rate','HSUPA Drop Rate','CS Soft HOSR',
+        'PS Soft HOSR','CS IRAT HOSR','CS InterFreq HOSR','PS InterFreq HOSR','Average HSDPA user thrp, Kbps','Session Setup SR',
+        'CSFB SR','Session Drop Rate','IntraFreq HOSR','4G-3G IRAT HOSR','DL Throughput, Kbps','UL Throughput, Kbps'])]
+    higher_df = round(higher_df.drop(columns='status'), 2)
+
+    higher_df.sort_values(by='c_days', ascending=False,inplace=True)
+    final_df = higher_df
+    #dd=pd.read_csv(r'd:\disk_E\Desktop\Export\Python\1\Anomality\anomalies(higher)_for.csv')
+    #final_df=final_df.merge(dd[dd['variable'] == 'Cell Availability excl blck'][['NE', 'value']].rename(
+    #    columns={'value': 'Cell Availability'}), on='NE', how='left')[['Date', 'tech','Vendor', 'NE','variable',
+    #   'value', 'threshold','Cell Availability', 'c_days']]
+    ####final_df=final_df[['Date', 'tech','Vendor', 'NE','variable',
+    ####   'value', 'threshold','c_days']]
+    #ss = pd.read_csv(r'd:\disk_E\Desktop\Export\Python\1\Anomality\anomalies_for_' + site_df['Date'][0].split(':')[0] + '.csv')
+    #site_df=site_df.merge(ss[ss['variable'] == 'Cell Availability excl blck'][['Site_name', 'value']].rename(
+    #    columns={'value': 'Cell Availability'}), on='Site_name', how='left')[['Date', 'tech', 'Site_name', 'Vendor', 'NE', 'Region', 'variable',
+    #   'value', 'threshold','Cell Availability', 'c_days']]
+    final_df = final_df.rename(columns={'Fails_and_drops_average_15_day':'Fails and drops average 15 day',
+                                    'Fails_and_drops_last_hour':'Fails and drops last hour'})[['Date', 'tech','Vendor',
+                                    'NE','variable','value', 'threshold','Fails and drops average 15 day',
+                                    'Fails and drops last hour','Cell Availability', 'c_days']]
+
+    site_df=site_df.rename(columns={'Fails_and_drops_average_15_day':'Fails and drops average 15 day',
+                                    'Fails_and_drops_last_hour':'Fails and drops last hour'})[['Date', 'tech', 'Site_name',
+                                    'Vendor', 'NE', 'Region','variable','value', 'threshold','Fails and drops average 15 day',
+                                    'Fails and drops last hour','Cell Availability', 'c_days']]
+    #site_df = site_df[-15:]
+    final_df=round(final_df,2)
+    return final_df, site_df, trend_df, trend_df_higher
+final_df, site_df,trend_df,trend_df_higher =read_files()
+
+layout = {
+
+          'template':'plotly_dark',
+          'margin':dict(l=2, r=2, t=5, b=0),
+          'font':dict(size=10),
+            'yaxis': {'title': ''},
+            'xaxis': {'title': '','type':'date'},
+          'clickmode':'event+select',
+          'legend':{'itemclick':'toggle'}
+            }
+
+def register_callback(dashapp):
+    @dashapp.callback(
+                  Output('table','data'),
+                  Output('table_cell','data'),
+                  Output('graph', 'figure'),
+                  Output('graph2', 'figure'),
+                  Input('continuing_hours', 'value'),
+                  Input('table','selected_cells'),
+                  #Input('table_cell', 'derived_virtual_row_ids'),
+                  #Input('table_cell', 'selected_row_ids'),
+                  Input('table_cell','selected_cells'),
+                  Input('table_cell','page_current'))
+    def plot_map_graph(c_hours,cell,second_cell,page_num):
+        ''' Draw traces of the feature 'Value' based one the currently selected stocks '''
+        # STEP 1
+        # Load data and sort/filter
+        print(cell)
+        df_sub=final_df
+        trend=trend_df
+        trend2=trend_df_higher
+        df_site=round(site_df,2)
+        if c_hours == '1H':
+            filt1 = df_sub['c_days']==1
+            filt2 = df_site['c_days'] == 1
+        elif c_hours == '2H':
+            filt1 = df_sub['c_days']==2
+            filt2 = df_site['c_days'] == 2
+        elif c_hours == '3H':
+            filt1 = df_sub['c_days']==3
+            filt2 = df_site['c_days'] == 3
+        elif c_hours == 'XH':
+            filt1 = df_sub['c_days']>3
+            filt2 = df_site['c_days'] >3
+        a = ''
+        print(page_num)
+        if page_num !=None:
+            num=int((page_num))
+        else : num=0
+
+        if cell!=None:
+            print('page number=', num, ' and row number', cell[0]['row'] + num * 10)
+            print(cell[0]['row'])
+            print(df_sub[filt1].iloc[cell[0]['row'] + num * 10, 3])
+            print(df_sub[filt1].iloc[cell[0]['row'] + num * 10, 4])
+            print(cell)
+            a = (trend2['NE'] == df_sub[filt1].iloc[cell[0]['row'] + num * 10, 3]) & (
+                        trend2['variable'] == df_sub[filt1].iloc[cell[0]['row'] + num * 10, 4])
+            threshold = df_sub[filt1].iloc[cell[0]['row'] + num * 10, 6]
+            figure2 = make_subplots(specs=[[{"secondary_y": False}]])
+            print(threshold, 'threshold')
+            print(trend2.loc[a,:].sample(5))
+            figure2.add_trace(go.Scatter(x=trend2.loc[a, 'Date'], y=trend2.loc[a, 'value'],  # Main KPI
+                                        mode='lines', opacity=0.7), secondary_y=False)
+            figure2.add_trace(
+                go.Scatter(x=trend2.loc[a, 'Date'], y=[threshold for i in range(len(trend2.loc[a, 'Date']))],  # Main KPI
+                           mode='lines', opacity=0.7, line=dict(color='firebrick', width=4, dash='dot')),
+                secondary_y=False)
+        else:
+            figure2 = go.Figure(data=[])
+
+
+        if second_cell !=None:
+            print('page number=', num, ' and row number', second_cell[0]['row'] + num*20)
+            print(second_cell[0]['row'])
+            print(df_site[filt2].iloc[second_cell[0]['row']+num*20, 2])
+            print(df_site[filt2].iloc[second_cell[0]['row']+num*20, 6])
+            print(second_cell)
+            a=(trend['Site_name']==df_site[filt2].iloc[second_cell[0]['row']+num*20,2]) & (trend['variable']==df_site[filt2].iloc[second_cell[0]['row']+num*20,6])
+            threshold=df_site[filt2].iloc[second_cell[0]['row']+num*20, 8]
+            figure = make_subplots(specs=[[{"secondary_y": False}]])
+            print(threshold,'threshold')
+            figure.add_trace(go.Scatter(x=trend.loc[a,'Date'], y=trend.loc[a,'value'],  # Main KPI
+                                    mode='lines',opacity=0.7), secondary_y=False)
+            figure.add_trace(go.Scatter(x=trend.loc[a, 'Date'], y=[threshold for i in range(len(trend.loc[a, 'Date']))],  # Main KPI
+                                        mode='lines', opacity=0.7,line = dict(color='firebrick', width=4, dash='dot')),
+                             secondary_y=False)
+            #, fill = 'tonexty'
+        else:
+            figure = go.Figure(data=[])
+
+        #if cell != None:
+        #    print(cell, 'selected cell with index ', cell[0]['row'])
+        #    print()
+        #    if df_sub[filt1].iloc[cell[0]['row'],1]=='4G':
+        #        a = (df_site['Region'] == df_sub[filt1].iloc[cell[0]['row'], 3]) & (df_site['tech']=='4G') & (df_site['variable']==df_sub[filt1].iloc[cell[0]['row'], 4])
+        #    else:
+        #        a = (df_site['NE']==df_sub[filt1].iloc[cell[0]['row'],3]) & (df_site['variable']==df_sub[filt1].iloc[cell[0]['row'], 4])
+        #    print(a)
+        #    df_site=df_site[a]
+        #    table2 = df_site[filt2].to_dict('records')
+        #else:
+        table2 = df_site[filt2].to_dict('records')
+        table1=df_sub[filt1].to_dict('records')
+
+        figure.layout=layout
+        figure2.layout = layout
+
+        return table1,table2,figure,figure2

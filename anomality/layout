@@ -1,0 +1,96 @@
+import datetime
+import dash_html_components as html
+import dash_core_components as dcc
+import dash_table
+from datetime import datetime as dt
+import pandas as pd
+
+# for formatting of the table
+#from dash_table.Format import Format, Group, Scheme, Symbol
+#columns=[{"name": i, "id": i}'type': 'numeric','format': Format(
+#    scheme=Scheme.fixed,
+#    precision=2,
+#    group=Group.yes,
+#    groups=3,
+#    group_delimiter='.',
+#    decimal_delimiter=','
+#)
+
+
+
+#higher_df=pd.read_csv(r'd:\disk_E\Desktop\Export\Python\1\Anomality\anomalies_higher_level.csv')
+#site_df=pd.read_csv(r'd:\disk_E\Desktop\Export\Python\1\Anomality\anomalies_site_level.csv')
+#higher_df=round(higher_df.drop(columns='status'),2)
+
+layout = html.Div(children=[dcc.RadioItems(id='continuing_hours',
+                                  options=[
+                                      {'label': 'Last hour', 'value': '1H'},
+                                      {'label': 'Last 2 hour', 'value': '2H'},
+                                      {'label': 'Last 3 hour', 'value': '3H'},
+                                      {'label': 'More than 3 hour', 'value': 'XH'}
+                                  ],
+                                  value='3H', labelStyle={'display': 'inline-block','margin-left':5,'margin-right':5},
+                                   style={'display': 'inline-block','margin-left':50,'background-color':'#CAC7C7',
+                                          "font-family": "Comic Sans MS"}
+                                  ),
+
+    html.Div(className='twelve columns', children=[dash_table.DataTable(id='table', columns=[
+        {"name": i, "id": i} for i in ['Date', 'tech','Vendor', 'NE','variable',
+       'value', 'threshold','Fails and drops average 15 day', 'Fails and drops last hour','Cell Availability','c_days']],
+                                                                      style_cell={'textAlign': 'center',
+                                                                                  'color': 'black', 'fontSize': 11,
+                                                                                  'height':'auto',
+                                                                                  'width': '{}%'.format(100/13),
+                                                                                  'whiteSpace':'normal',
+                                                                                  "font-family": "Comic Sans MS"},
+                                                                      #style_cell_conditional=[{'if': {'column_id': 'KPI'},
+                                                                       # 'width': '12%'},
+                                                                        #  {'if': {
+                                                                         #     'column_id': 'Measurement Unit'},
+                                                                          # 'width': '5.55%'},
+                                                                          #{'if': {'column_id': 'Threshold'},
+                                                                          #  'width': '5%'}
+                                                                          #],
+                                                                      style_header={
+                                                                          'backgroundColor': 'rgb(167, 171, 170)',
+                                                                          'fontWeight': 'bold', 'color': 'black',
+                                                                          'fontSize': 12},
+                                                                     virtualization=True,
+                                                                      fixed_rows={'headers': True},
+                                                                      style_table={'height': '40vh',
+                                                                                   'overflowY': 'auto'
+                                                                                   },page_size=10),
+html.H1(id='table1_title',children=[],style={'font-size':18,'font-color':'white','padding-top':5,
+                                             'font-weight':'bold',"font-family": "Comic Sans MS"}),
+                                                   dash_table.DataTable(id='table_cell',columns=[
+        {"name": i, "id": i} for i in ['Date', 'tech', 'Site_name', 'Vendor', 'NE', 'Region','variable',
+   'value', 'threshold','Fails and drops average 15 day', 'Fails and drops last hour','Cell Availability', 'c_days']],
+                                                                      style_cell={'textAlign': 'center',
+                                                                                  'width': '{}%'.format(100/13),
+                                                                                  'color': 'black', 'fontSize': 11,
+                                                                                  "font-family": "Comic Sans MS",
+                                                                                  'whiteSpace': 'normal','height': 'auto'},
+                                                                      style_header={
+                                                                          'backgroundColor': 'rgb(167, 171, 170)',
+                                                                          'fontWeight': 'bold', 'color': 'black',
+                                                                          'fontSize': 12},
+                                                                      virtualization=True,
+filter_action="native",
+        sort_action="native",
+page_action="native",
+
+                                                                        #filter_action='native',
+                                                                      fixed_rows={'headers': True},
+                                                                      style_table={'height': '40vh',
+                                                                                   'overflowY': 'auto'
+                                                                                },export_format="csv",page_size=20,
+
+),html.Div(className='row', children=[html.Div(className='five columns',
+                                               children=[dcc.Graph(id='graph',style={'height': '45vh','padding-top':25},
+                                                           config={'displayModeBar': False})]),
+                            html.Div(className='five columns', children=[
+                                                 dcc.Graph(id='graph2',style={'height': '45vh','padding-top':25},
+                                                           config={'displayModeBar': False})])])
+                                                 ])],style={'background-color': 'rgb(94, 92, 92)'})
+#df=pd.read_csv(r'C:\Users\ismayilm\Downloads\Python\Practice\PRB_Utilization\UPMS\Power_util.csv')
+#df_cell=pd.read_csv(r'C:\Users\ismayilm\Downloads\Python\Practice\PRB_Utilization\UPMS\Power_util.csv')

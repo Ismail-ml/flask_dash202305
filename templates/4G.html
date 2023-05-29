@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- Required meta tags -->
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main.css') }}">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/1.6.2/css/buttons.dataTables.min.css">
+
+    {% if title %}
+    <title>UPMS Trial - {{ title }}</title>
+    {% else %}
+    <title>UPMS Trial</title>
+    {% endif %}
+
+</head>
+<body>
+<script>
+            function getDate() {
+              var today = new Date();
+              var dd = today.getDate();
+              var mm = today.getMonth()+1; //January is 0!
+              var yyyy = today.getFullYear();
+
+              if(dd<10) {
+                  dd = '0'+dd
+              }
+
+              if(mm<10) {
+                  mm = '0'+mm
+              }
+
+              today = yyyy + '-' + mm + '-' + dd;
+              console.log(today);
+              document.getElementById("start_date").value = today;
+              document.getElementById("end_date").value = today;
+            }
+
+
+            window.onload = function() {
+              getDate();
+            }
+</script>
+
+<header class="site-header">
+    <nav class="navbar navbar-expand-md navbar-dark bg-steel fixed-top">
+        <img src="{{url_for('static', filename='logo.png')}}" align="middle" width="100" height="40"/>
+	<img src="{{url_for('static', filename='logo_xari.jpg')}}" align="middle" width="70" height="40" />
+        <div class="container">
+            <a class="navbar-brand mr-4" href="/2G" style="color:#435F82; font-weight:bold;" >2G</a>
+            <a class="navbar-brand mr-4" href="/3G" style="color:#435F82; font-weight:bold;" >3G</a>
+            <a class="navbar-brand mr-4" href="/4G" style="color:#435F82; font-weight:bold;" >4G</a>
+            <a class="navbar-brand mr-4" href="/dashboard" style="color:#435F82; font-weight:bold;">RAN Dashboard</a>
+	    <a class="navbar-brand mr-4" href="/core_dashboard" style="color:#435F82; font-weight:bold;">Core Dashboard</a>
+            <a class="navbar-brand mr-4" href="/worst_sites" style="color:#435F82; font-weight:bold;">Worst Sites</a>
+	    <a class="navbar-brand mr-4" href="/anomality" style="color:#435F82; font-weight:bold;">Anomalities</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggle" aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarToggle">
+
+                <!-- Navbar Right Side -->
+
+            </div>
+        </div>
+    </nav>
+</header>
+
+<div class="result-pane">
+
+    <table id="result_table" name="result_table" calss="display" width="100%">
+        {% for table in tables %}
+        {{titles[loop.index]}}
+        {{ table|safe }}
+        {% endfor %}
+    </table>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.js" ></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js" ></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.6.2/js/dataTables.buttons.min.js" ></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js" ></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js" ></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js" ></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.html5.min.js" ></script>
+
+
+    <script type="text/javascript">
+        $('#result_table').DataTable( {
+            dom: 'Bfrtip',
+            buttons: [
+                'copyHtml5',
+                'excel',
+                'csvHtml5',
+                'pdfHtml5'
+            ]
+        } );
+    </script>
+
+</div>
+
+<div class="selection-pane" >
+    <form method="post" id="first_selection" name="first_selection">
+        <fieldset>
+            <legend>Network Element Selection:</legend>&nbsp;
+            <label class="radio-inline" for="Site"><input type="radio" id="Sites" name="NE_select" onclick="showDiv('hidden_div', this)" value="Site_name">&nbsp;Site</label>&nbsp;&nbsp;&nbsp;
+            <label class="radio-inline" for="Clusters"><input type="radio" id="Clusters" name="NE_select" onclick="showDiv('hidden_div', this)" value="Cluster">&nbsp;Cluster</label>&nbsp;&nbsp;&nbsp;
+            <label class="radio-inline" for="Vendor"><input type="radio" id="Vendors" name="NE_select" onclick="showDiv('hidden_div', this)" value="Vendor">&nbsp;Vendor</label>&nbsp;&nbsp;&nbsp;
+            <label class="radio-inline" for="Region"><input type="radio" id="Regions" name="NE_select" onclick="showDiv('hidden_div', this)" value="Region">&nbsp;Region</label>&nbsp;&nbsp;&nbsp;
+        </fieldset>
+    </form>
+</div>
+<form method=post action="/result" >
+    <div class="left-pane">
+
+        <label for="KPIlist">4G KPI Selection:</label><br>
+        <select id="KPIlist" name="KPIlist" size="10" multiple style="width: 180px;" >
+            {% for RNC in KPIs %}
+            <option value="{{RNC}}">{{RNC}}</option>
+            {% endfor %}
+        </select>
+
+    </div>
+    <div class="selection-pane2">
+        <script>
+            function myFunction(NE_select) {
+                document.getElementById("result").value = NE_select;
+            }
+        </script>
+        <fieldset>
+            <legend>Report level:</legend>&nbsp;
+            <label class="radio-inline" for="Cell"><input type="radio" id="Cell" name="report_level" value="Cell_name">&nbsp;Cell</label>&nbsp;&nbsp;&nbsp;
+            <label class="radio-inline" for="Site"><input type="radio" id="Site" name="report_level" value="Site_name">&nbsp;Site</label>&nbsp;&nbsp;&nbsp;
+            <label class="radio-inline" for="Vendor"><input type="radio" id="vendor" name="report_level" value="Vendor">&nbsp;Vendor</label>&nbsp;&nbsp;&nbsp;
+            <label class="radio-inline" for="Region"><input type="radio" id="Region" name="report_level" value="Region">&nbsp;Region</label>&nbsp;&nbsp;&nbsp;
+            <label class="radio-inline" for="Network"><input type="radio" id="Network" name="report_level" value="Network">&nbsp;Network</label>&nbsp;&nbsp;&nbsp;
+        </fieldset>
+        <fieldset>
+            <legend>Time Resolution:</legend>&nbsp;
+	    <label class="radio-inline" for="Monthly"><input type="radio" id="Monthly" name="time_resolution" value="Monthly">&nbsp;Monthly</label>&nbsp;&nbsp;&nbsp;
+            <label class="radio-inline" for="Daily"><input type="radio" id="Daily" name="time_resolution" value="Daily">&nbsp;Daily</label>&nbsp;&nbsp;&nbsp;
+            <label class="radio-inline" for="Hourly"><input type="radio" id="Hourly" name="time_resolution" value="Hourly">&nbsp;Hourly</label>&nbsp;&nbsp;&nbsp;
+        </fieldset>
+        <fieldset>
+            <legend>Date Selection:</legend>&nbsp;
+            <label for="start_date">Start Date:</label>
+            <input type="date" id="start_date" name="start_date" onload="getDate()">
+            <label for="end_date">End Date:</label>
+            <input type="date" id="end_date" name="end_date" onload="getDate()">
+        </fieldset>
+
+        <div class="list-pane" id="hidden_div" style="display: none;">
+            <label for="RNClist">RNC:</label><br>
+            <select id="RNClist" name="RNClist" size="10" multiple >
+                {% for RNC in RNCs %}
+                <option value="{{RNC}}">{{RNC}}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="list-pane" id="hidden_div2" style="display: none;">
+            <label for="Regionlist">Region:</label><br>
+            <select id="Regionlist" name="Regionlist" size="10" multiple >
+                {% for RNC in Regions %}
+                <option value="{{RNC}}">{{RNC}}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="list-pane" id="hidden_div3" style="display: none;">
+            <label for="Vendorlist">Vendor:</label><br>
+            <select id="Vendorlist" name="Vendorlist" size="10" multiple >
+                {% for RNC in Vendors %}
+                <option value="{{RNC}}">{{RNC}}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="list-pane" id="hidden_div4" style="display: none;">
+            <label for="Sitelist">Sites:</label><br>
+            <select id="Sitelist" name="Sitelist" size="10" multiple >
+                {% for RNC in Sites %}
+                <option value="{{RNC}}">{{RNC}}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="list-pane" id="hidden_div5" style="display: none;">
+            <label for="Clusterlist">Cluster:</label><br>
+            <textarea name="Clusterlist" id="Clusterlist" cols="10" rows="10"></textarea>
+        </div>
+        <script>
+            function showDiv(divId, element)
+            {
+                if (document.getElementById(divId).style.display = element.value == "RNC_name") {
+                    document.getElementById('hidden_div').style.display = 'block';
+                    document.getElementById('hidden_div2').style.display = 'none';
+                    document.getElementById('hidden_div3').style.display = 'none';
+                    document.getElementById('hidden_div4').style.display = 'none';
+                    document.getElementById('hidden_div5').style.display = 'none';
+                    document.getElementById('Sitelist').selectedIndex = -1;
+                    document.getElementById('Regionlist').selectedIndex = -1;
+                    document.getElementById('Vendorlist').selectedIndex = -1;
+                    document.getElementById('Clusterlist').selectedIndex = -1;
+                    document.getElementById('Clusterlist').value='';
+
+                } else if (document.getElementById(divId).style.display = element.value == "Region") {
+                    document.getElementById('hidden_div2').style.display = 'block';
+                    document.getElementById('hidden_div3').style.display = 'none';
+                    document.getElementById('hidden_div4').style.display = 'none';
+                    document.getElementById('hidden_div5').style.display = 'none';
+                    document.getElementById('Sitelist').selectedIndex = -1;
+                    document.getElementById('Vendorlist').selectedIndex = -1;
+                    document.getElementById('Clusterlist').selectedIndex = -1;
+                    document.getElementById('Clusterlist').value='';
+                } else if (document.getElementById(divId).style.display = element.value == "Vendor") {
+                    document.getElementById('hidden_div2').style.display = 'none';
+                    document.getElementById('hidden_div3').style.display = 'block';
+                    document.getElementById('hidden_div4').style.display = 'none';
+                    document.getElementById('hidden_div5').style.display = 'none';
+                    document.getElementById('Sitelist').selectedIndex = -1;
+                    document.getElementById('Regionlist').selectedIndex = -1;
+                    document.getElementById('Clusterlist').selectedIndex = -1;
+                    document.getElementById('Clusterlist').value='';
+                } else if (document.getElementById(divId).style.display = element.value == "Site_name") {
+                    document.getElementById('hidden_div2').style.display = 'none';
+                    document.getElementById('hidden_div3').style.display = 'none';
+                    document.getElementById('hidden_div4').style.display = 'block';
+                    document.getElementById('hidden_div5').style.display = 'none';
+                    document.getElementById('Regionlist').selectedIndex = -1;
+                    document.getElementById('Vendorlist').selectedIndex = -1;
+                    document.getElementById('Clusterlist').selectedIndex = -1;
+                    document.getElementById('Clusterlist').value='';
+                } else if (document.getElementById(divId).style.display = element.value == "Network") {
+                    document.getElementById('hidden_div2').style.display = 'none';
+                    document.getElementById('hidden_div3').style.display = 'none';
+                    document.getElementById('hidden_div4').style.display = 'none';
+                    document.getElementById('hidden_div5').style.display = 'none';
+                    document.getElementById('Sitelist').selectedIndex = -1;
+                    document.getElementById('Vendorlist').selectedIndex = -1;
+                    document.getElementById('Regionlist').selectedIndex = -1;
+                    document.getElementById('Clusterlist').selectedIndex = -1;
+                    document.getElementById('Clusterlist').value='';
+                } else if (document.getElementById(divId).style.display = element.value == "Cluster") {
+                    document.getElementById('hidden_div2').style.display = 'none';
+                    document.getElementById('hidden_div3').style.display = 'none';
+                    document.getElementById('hidden_div4').style.display = 'none';
+                    document.getElementById('hidden_div5').style.display = 'block';
+                    document.getElementById('Sitelist').selectedIndex = -1;
+                    document.getElementById('Regionlist').selectedIndex = -1;
+                    document.getElementById('Vendorlist').selectedIndex = -1;
+                }
+
+            }
+        </script>
+    </div>
+    <input type="checkbox" id="direct_export" name="direct_export" value="Yes" style="top:385px;left:290px;position:absolute;" >
+    <label for="direct_export" style="top:380px;left:310px;position:absolute;"> Export directly as csv</label><br>
+    <input type="submit" value="Submit" style="top:380px;left:210px;position:absolute;">
+
+</form>
+
+</body>
+</html>
