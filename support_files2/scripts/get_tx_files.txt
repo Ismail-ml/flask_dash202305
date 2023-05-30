@@ -1,0 +1,16 @@
+#!/bin/bash
+
+sshpass -p "qarftp" scp qarftp@10.240.104.155:$(sshpass -p "qarftp" ssh qarftp@10.240.104.155 'ls -t Tx/*IG27*_15_*.csv | head -1') /home/ismayil/flask_dash/data/tx 
+sshpass -p "qarftp" scp qarftp@10.240.104.155:$(sshpass -p "qarftp" ssh qarftp@10.240.104.155 'ls -t Tx/*IG30014*_15_*.csv | head -1') /home/ismayil/flask_dash/data/tx 
+sshpass -p "qarftp" scp qarftp@10.240.104.155:$(sshpass -p "qarftp" ssh qarftp@10.240.104.155 'ls -t Tx/*IG30024*_15_*.csv | head -1') /home/ismayil/flask_dash/data/tx 
+sshpass -p "qarftp" scp qarftp@10.240.104.155:$(sshpass -p "qarftp" ssh qarftp@10.240.104.155 'ls -t Tx/*IGMSTP*_15_*.csv | head -1') /home/ismayil/flask_dash/data/tx 
+sshpass -p "qarftp" scp qarftp@10.240.104.155:$(sshpass -p "qarftp" ssh qarftp@10.240.104.155 'ls -t Tx/*IG30029*_15_*.csv | head -1') /home/ismayil/flask_dash/data/tx 
+sshpass -p "qarftp" scp qarftp@10.240.104.155:$(sshpass -p "qarftp" ssh qarftp@10.240.104.155 'ls -t Tx/*IGRTN*_15_*.csv | head -1') /home/ismayil/flask_dash/data/tx 
+sshpass -p "qarftp" scp qarftp@10.240.104.155:$(sshpass -p "qarftp" ssh qarftp@10.240.104.155 'ls -t Tx/*IG41022*_15_*.csv | head -1') /home/ismayil/flask_dash/data/tx
+sshpass -p "qarftp" scp qarftp@10.240.104.155:$(sshpass -p "qarftp" ssh qarftp@10.240.104.155 'ls -t Tx_Nokia/*TSLHop*.xml | head -1') /home/ismayil/flask_dash/data/tx 
+sshpass -p "qarftp" scp qarftp@10.240.104.155:$(sshpass -p "qarftp" ssh qarftp@10.240.104.155 'ls -t Tx_Nokia/*RSLHop*.xml | head -1') /home/ismayil/flask_dash/data/tx 
+sshpass -p "qarftp" scp qarftp@10.240.104.155:$(sshpass -p "qarftp" ssh qarftp@10.240.104.155 'ls -t Tx_Nokia/*RxStats*.xml | head -1') /home/ismayil/flask_dash/data/tx 
+sshpass -p "qarftp" scp qarftp@10.240.104.155:$(sshpass -p "qarftp" ssh qarftp@10.240.104.155 'ls -t Tx_Nokia/*TxStats*.xml | head -1') /home/ismayil/flask_dash/data/tx 
+sshpass -p "qarftp" scp qarftp@10.240.104.155:$(sshpass -p "qarftp" ssh qarftp@10.240.104.155 'ls -t Tx_Nokia/*AdaptiveModulation*.xml | head -1') /home/ismayil/flask_dash/data/tx 
+
+

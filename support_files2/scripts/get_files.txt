@@ -1,0 +1,11 @@
+#!/bin/bash
+
+#sshpass -p "qarftp" scp qarftp@10.240.104.155:Nokia/*counter*hourly*.csv /home/ismayil/flask_dash/data/nokia/pool
+sshpass -p "qarftp" scp qarftp@10.240.104.155:Nokia/Main_KPIs*.zip /home/ismayil/flask_dash/data/nokia/pool 
+
+
+
+sshpass -p "qarftp" scp qarftp@10.240.104.155:missing/nokia/*counter*.csv /home/ismayil/flask_dash/data/nokia/pool/missing
+sshpass -p "qarftp" scp qarftp@10.240.104.155:missing/huawei/*counter*.csv /home/ismayil/flask_dash/data/huawei/pool/missing
+
+python3.8 /home/ismayil/flask_dash/support_files/scripts/distribute_files.py

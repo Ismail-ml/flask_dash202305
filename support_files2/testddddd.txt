@@ -1,0 +1,121 @@
+Formula={'2G':{'Call Setup SR':"100*(1-df['cssr_num1']/df['cssr_den1'])*df['cssr_num2']/df['cssr_den2']*df['cssr_num3']/df['cssr_den3']",
+           'Call Drop Rate':"df['drop_rate_num']/df['drop_rate_den']*100",
+           'Call Block Rate':"df['call_block_rate_num']/df['call_block_rate_den']*100",
+           'SDCCH Drop Rate':"df['sdcch_drop_rate_num']/df['sdcch_drop_rate_den']*100",
+           'SDCCH Block Rate':"df['sdcch_block_rate_num']/df['sdcch_block_rate_den']*100",
+           'Handover SR':"df['hosr_num']/df['hosr_den']*100",
+           'Cell Availability':"df['cell_avail_num']/df['cell_avail_den']*100",
+           'Cell Availability excl blck':"(df['cell_avail_num']+df['cell_avail_blck_num'])/(df['cell_avail_den']-df['cell_avail_blck_den'])*100",
+           'TCH Availability':"df['tch_avail_num']/df['tch_avail_den']*100",
+           'SDCCH Availability':"df['sdcch_avail_num']/df['sdcch_avail_den']*100",
+           'TBF Est SR':"df['tbf_est_sr_num']/df['tbf_est_sr_den']*100",
+           'TBF Drop Rate':"df['tbf_drop_rate_num']/df['tbf_drop_rate_den']*100",
+           'CS Traffic, Erl':"df['cs_traffic_erl']",
+           'PS Traffic, MB':"df['ps_traffic_mb']",
+           'Combined Thrp, Kbps':"df['comb_thrp_num']/df['comb_thrp_den']",
+           'Call Setup Fails':"df['cssr_num1']+df['cssr_den2']+df['cssr_den3']-df['cssr_num2']-df['cssr_num3']",
+           'Call Setup Den':"df['cssr_den1']+df['cssr_den2']+df['cssr_den3']",
+           'Call Drops':"df['drop_rate_num']",
+           'Call Blocks':"df['call_block_rate_num']",
+           'SDCCH Drops':"df['sdcch_drop_rate_num']",
+           'SDCCH Blocks':"df['sdcch_block_rate_num']",
+           'TBF Drops':"df['tbf_drop_rate_num']",
+           'TBF Est fails':"df['tbf_est_sr_den']-df['tbf_est_sr_num']",
+           'Handover fails':"df['hosr_den']-df['hosr_num']", 'Handover attempts':"df['hosr_den']"
+           },
+        '3G':{'Voice Call Setup SR':"100*df['voice_sr_num1']/df['voice_sr_den1']*df['voice_sr_num2']/df['voice_sr_den2']",
+           'Voice Call DR':"100*df['voice_dr_num']/df['voice_dr_den']",
+           'HSDPA RAB SR':"100*df['hsdpa_sr_num']/df['hsdpa_sr_den']",
+           'HSUPA RAB SR':"100*df['hsupa_sr_num']/df['hsupa_sr_den']",
+           'HSDPA Drop Rate':"100*df['hsdpa_dr_num']/df['hsdpa_dr_den']",
+           'HSUPA Drop Rate':"100*df['hsupa_dr_num']/df['hsupa_dr_den']",
+           'R99 Setup SR':"100*df['r99_sr_num']/df['r99_sr_den']",
+           'R99 Drop Rate':"100*df['r99_dr_num']/df['r99_dr_den']",
+           'CS Soft HOSR':"100*df['cs_sho_ho_num']/df['cs_sho_ho_den']",
+           'PS Soft HOSR':"100*df['ps_sho_ho_num']/df['ps_sho_ho_den']",
+           'CS IRAT HOSR':"100*df['cs_inter_rat_ho_num']/df['cs_inter_rat_ho_den']",
+           'CS InterFreq HOSR':"100*df['cs_inter_freq_ho_num']/df['cs_inter_freq_ho_den']",
+           'PS InterFreq HOSR':"100*df['ps_inter_freq_ho_num']/df['ps_inter_freq_ho_den']",
+           'Cell Availability':"100*df['cell_avail_num']/df['cell_avail_den']",
+           'Cell Availability excl blck':"100*(df['cell_avail_num']+df['cell_avail_blck_num'])/(df['cell_avail_den']-df['cell_avail_blck_den'])",
+           'Average HSDPA user thrp, Kbps':"df['hsdpa_thrp_num']/df['hsdpa_thrp_den']",
+           'CS Traffic, Erl':"df['cs_traf']",
+           'PS Traffic, MB':"df['ps_traf']",
+           'Call Setup fails':"df['voice_sr_den1']+df['voice_sr_den2']-df['voice_sr_num1']-df['voice_sr_num2']",
+           'Call drops':"df['voice_dr_num']",
+           'Call Setup attempts':"df['voice_sr_den1']+df['voice_sr_den2']",
+           'HSDPA Setup fails':"df['hsdpa_sr_den']-df['hsdpa_sr_num']",
+           'HSDPA Setup attempts':"df['hsdpa_sr_den']",
+           'HSDPA drops':"df['hsdpa_dr_num']",
+           'HSUPA Setup fails':"df['hsupa_sr_den']-df['hsupa_sr_num']",
+           'HSUPA Setup attempts':"df['hsupa_sr_den']",
+           'HSUPA drops':"df['hsupa_dr_num']",
+           'CS Soft HO fails':"df['cs_sho_ho_den']-df['cs_sho_ho_num']",
+           'CS Soft HO attempts':"df['cs_sho_ho_den']",
+           'PS Soft HO fails':"df['ps_sho_ho_den']-df['ps_sho_ho_num']",
+           'PS Soft HO attempts':"df['ps_sho_ho_den']",
+           'CS IRAT HO attempts':"df['cs_inter_rat_ho_den']",
+           'CS IRAT HO fails':"df['cs_inter_rat_ho_den']-df['cs_inter_rat_ho_num']",
+           'CS InterFreq HO attempts':"df['cs_inter_freq_ho_den']",
+           'CS InterFreq HO fails':"df['cs_inter_freq_ho_den']-df['cs_inter_freq_ho_num']",
+           'PS InterFreq HO attempts':"df['ps_inter_freq_ho_den']",
+           'PS InterFreq HO fails':"df['ps_inter_freq_ho_den']-df['ps_inter_freq_ho_num']"},
+        '4G':{'RRC Setup SR':"100*df['rrc_sr_num']/df['rrc_sr_den']",
+           'RAB Setup SR':"100*df['rab_sr_num']/df['rab_sr_den']",
+           'Session Setup SR':"100*df['rrc_sr_num']/df['rrc_sr_den']*df['rab_sr_num']/df['rab_sr_den']",
+           'CSFB SR':"100*df['csfb_sr_num']/df['csfb_sr_den']",
+           'Session Drop Rate':"100*df['dcr_num']/df['dcr_den']",
+           'Cell Availability':"100*df['cell_avail_num']/df['cell_avail_den']",
+           'Cell Availability excl blck':"100*(df['cell_avail_num']+df['cell_avail_blck_num'])/(df['cell_avail_den']-df['cell_avail_blck_den'])",
+           'IntraFreq HOSR':"100*df['intra_freq_ho_num']/df['intra_freq_ho_den']",
+           '4G-3G IRAT HOSR':"100*df['irat_ho_num']/df['irat_ho_den']",
+           'DL Traffic, MB':"df['dl_ps_traf']",
+           'UL Traffic, MB':"df['ul_ps_traf']",
+           'Total Traffic, MB':"df['dl_ps_traf']+df['ul_ps_traf']",
+           'DL Throughput, Kbps':"df['dl_thrp_num']/df['dl_thrp_den']",
+           'UL Throughput, Kbps':"df['ul_thrp_num']/df['ul_thrp_den']",
+           'RRC Setup fails':"df['rrc_sr_den']-df['rrc_sr_num']",
+           'RRC Setup attempts':"df['rrc_sr_den']",
+           'RAB Setup fails':"df['rab_sr_den']-df['rab_sr_num']",
+           'RAB Setup attempts':"df['rab_sr_den']",
+           'Session drops':"df['dcr_num']",
+           'CSFB fails':"df['csfb_sr_den']-df['csfb_sr_num']",
+           'CSFB attempts':"df['csfb_sr_den']",
+           'IntraFreq HO fails':"df['intra_freq_ho_den']-df['intra_freq_ho_num']",
+           'IntraFreq HO attempts':"df['intra_freq_ho_den']",
+           '4G-3G IRAT HO fails':"df['irat_ho_den']-df['irat_ho_num']",
+           '4G-3G IRAT HO attempts':"df['irat_ho_den']"}}
+import pandas as pd
+import os
+os.chdir(r'/home/ismayil/flask_dash/support_files')
+import datetime
+from datetime import datetime as dt
+needed=dt.strptime(dt.strftime(dt.now()-datetime.timedelta(hours=1),'%d.%m.%y %H:00'),'%d.%m.%y %H:00')
+hh=pd.date_range(end=needed,periods=15,freq='24H')
+
+files=pd.date_range(end=needed,periods=15,freq='24H').strftime("%B_%Y").tolist()
+print(hh)
+print(set(files))
+to_concat=[]
+for i in set(files):
+        if os.path.isfile(os.path.join(r'/home/ismayil/flask_dash/support_files',i+'.h5')):
+            to_concat.append(pd.read_hdf(i+'.h5','/threeG',where='Date in hh'))
+df=pd.concat(to_concat).groupby(['Date','Site_name','Vendor','RNC_name','Region']).sum().reset_index()
+
+for i in Formula['3G'].keys():
+    df[i]=eval(Formula['3G'][i])
+df2=df[['Date','Site_name','Vendor','RNC_name','Region']+list(Formula['3G'].keys())]
+l=df2.columns.get_loc('Region')+1
+# most efficient way of finding threshold
+filt=[i for i in df2.columns if (('SR' in i) | ('thrp' in i))]
+Q1=df2.groupby('Site_name').quantile(0.25)
+Q3=df2.groupby('Site_name').quantile(0.75)
+thr=(Q1[filt]-1.5*(Q3[filt]-Q1[filt])).merge(Q1[df2.columns[l:][~df2.columns[l:].isin(filt)]]+1.5*(Q3[df2.columns[l:][~df2.columns[l:].isin(filt)]]-Q1[df2.columns[l:][~df2.columns[l:].isin(filt)]]),left_index=True,right_index=True).iloc[:,1:]
+df4=df2.melt(id_vars=df2.columns[:l],value_vars=df2.columns[l:]).merge(thr.reset_index().melt(id_vars='Site_name',value_name='threshold'),on=['Site_name','variable'])
+#most efficient way
+df4.loc[(df4['value']<df4['threshold']) & (df4['variable'].isin(filt)), 'status'] = -1
+df4.loc[(df4['value']>df4['threshold']) & (df4['variable'].isin(filt)), 'status'] = 1
+df4.loc[(df4['value']<df4['threshold']) & (~df4['variable'].isin(filt)), 'status'] = 1
+df4.loc[(df4['value']>df4['threshold']) & (~df4['variable'].isin(filt)), 'status'] = -1
+df4.loc[df4['value']==df4['threshold'], 'status'] = 0
+print(df4.sample(5))

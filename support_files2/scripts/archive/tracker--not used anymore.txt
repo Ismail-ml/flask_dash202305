@@ -1,0 +1,7 @@
+#!/bin/bash
+
+sshpass -p "qarftp" scp qarftp@10.240.104.155:dump.zip /home/ismayil/Downloads
+
+sshpass -p "qarftp" scp qarftp@10.240.104.155:Azerconnect_RNP_tracker.xlsx /home/ismayil/Downloads
+
+python3.8 /home/ismayil/flask_dash/support_files/scripts/rnp_tracker.py

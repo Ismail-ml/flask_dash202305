@@ -1,0 +1,46 @@
+#!/bin/bash
+
+rm -f /home/ismayil/flask_dash/data/nokia/2g/1/*.csv
+rm -f /home/ismayil/flask_dash/data/nokia/2g/2/*.csv
+rm -f /home/ismayil/flask_dash/data/nokia/3g/1/*.csv
+rm -f /home/ismayil/flask_dash/data/nokia/3g/2/*.csv
+rm -f /home/ismayil/flask_dash/data/nokia/4g/1/*.csv
+rm -f /home/ismayil/flask_dash/data/huawei/2g/1/*.csv
+rm -f /home/ismayil/flask_dash/data/huawei/2g/2/*.csv
+rm -f /home/ismayil/flask_dash/data/huawei/2g/3/*.csv
+rm -f /home/ismayil/flask_dash/data/huawei/2g/ta_inter/*.csv
+rm -f /home/ismayil/flask_dash/data/huawei/3g/1/*.csv
+rm -f /home/ismayil/flask_dash/data/huawei/3g/2/*.csv
+rm -f /home/ismayil/flask_dash/data/huawei/3g/3/*.csv
+rm -f /home/ismayil/flask_dash/data/huawei/4g/1/*.csv
+rm -f /home/ismayil/flask_dash/data/huawei/4g/2/*.csv
+rm -f /home/ismayil/flask_dash/data/nokia/2g/1/missing/*.csv
+rm -f /home/ismayil/flask_dash/data/nokia/2g/2/missing/*.csv
+rm -f /home/ismayil/flask_dash/data/nokia/3g/1/missing/*.csv
+rm -f /home/ismayil/flask_dash/data/nokia/3g/2/missing/*.csv
+rm -f /home/ismayil/flask_dash/data/nokia/4g/1/missing/*.csv
+rm -f /home/ismayil/flask_dash/data/huawei/2g/1/missing/*.csv
+rm -f /home/ismayil/flask_dash/data/huawei/2g/2/missing/*.csv
+rm -f /home/ismayil/flask_dash/data/huawei/2g/3/missing/*.csv
+rm -f /home/ismayil/flask_dash/data/huawei/3g/1/missing/*.csv
+rm -f /home/ismayil/flask_dash/data/huawei/3g/2/missing/*.csv
+rm -f /home/ismayil/flask_dash/data/huawei/3g/3/missing/*.csv
+rm -f /home/ismayil/flask_dash/data/huawei/4g/1/missing/*.csv
+rm -f /home/ismayil/flask_dash/data/huawei/4g/2/missing/*.csv
+rm -f /home/ismayil/flask_dash/data/nokia/pool/*.csv
+rm -f /home/ismayil/flask_dash/data/nokia/pool/*.zip
+rm -f /home/ismayil/flask_dash/data/nokia/pool/missing/*.csv
+rm -f /home/ismayil/flask_dash/data/huawei/pool/*.csv
+rm -f /home/ismayil/flask_dash/data/huawei/pool/missing/*.csv
+rm -f /home/ismayil/flask_dash/data/core/*.csv
+rm -f /home/ismayil/flask_dash/data/utilization/*.csv
+rm -f /home/ismayil/flask_dash/import_result.txt
+rm -f /home/ismayil/Downloads/dump.zip
+rm -f /home/ismayil/Downloads/Azerconnect_RNP_tracker.xlsx
+rm -f /disk2/support_files/atoti/bi/*.csv
+
+
+
+
+
+

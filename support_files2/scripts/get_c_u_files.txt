@@ -1,0 +1,38 @@
+#!/bin/bash
+
+#sshpass -p "qarftp" scp qarftp@10.240.104.155:Huawei/*Data*.csv /home/ismayil/flask_dash/data/core 
+#sshpass -p "qarftp" scp qarftp@10.240.104.155:Huawei/*VLR_reg_subs*.csv /home/ismayil/flask_dash/data/core 
+#sshpass -p "qarftp" scp qarftp@10.240.104.155:Huawei/*LU_SR*.csv /home/ismayil/flask_dash/data/core 
+#sshpass -p "qarftp" scp qarftp@10.240.104.155:Huawei/*Pag_SR*.csv /home/ismayil/flask_dash/data/core 
+#sshpass -p "qarftp" scp qarftp@10.240.104.155:Huawei/*usn_kpis*.csv /home/ismayil/flask_dash/data/core 
+#sshpass -p "qarftp" scp qarftp@10.240.104.155:Huawei/*LTE_rep*.csv /home/ismayil/flask_dash/data/core 
+#sshpass -p "qarftp" scp qarftp@10.240.104.155:Huawei/*C_setup*.csv /home/ismayil/flask_dash/data/core
+#sshpass -p "qarftp" scp qarftp@10.240.104.155:Huawei/*UGW\\\ DT*.csv /home/ismayil/flask_dash/data/core 
+#sshpass -p "qarftp" scp qarftp@10.240.104.155:Huawei/*1_abcf_sess*.csv /home/ismayil/flask_dash/data/core
+#sshpass -p "qarftp" scp qarftp@10.240.104.155:Huawei/*1_ats_basic*.csv /home/ismayil/flask_dash/data/core
+#sshpass -p "qarftp" scp qarftp@10.240.104.155:Huawei/*2_scscf*.csv /home/ismayil/flask_dash/data/core
+#sshpass -p "qarftp" scp qarftp@10.240.104.155:Huawei/*3_scscf*.csv /home/ismayil/flask_dash/data/core
+#sshpass -p "qarftp" scp qarftp@10.240.104.155:Huawei/*4-2g3g_esrvcc*.csv /home/ismayil/flask_dash/data/core
+#sshpass -p "qarftp" scp qarftp@10.240.104.155:Huawei/*5_volte_ims*.csv /home/ismayil/flask_dash/data/core
+sshpass -p "qarftp" scp qarftp@10.240.104.155:CEM/*CST*.csv /home/ismayil/flask_dash/data/cem
+sshpass -p "qarftp" scp qarftp@10.240.104.155:Huawei/*_qar*.csv /home/ismayil/flask_dash/data/core
+sshpass -p "qarftp" scp qarftp@10.240.104.155:Nokia/*Core_KPIs*.zip /home/ismayil/flask_dash/data/nokia/pool
+sshpass -p "qarftp" scp qarftp@10.240.104.155:Huawei/*counter*.csv /home/ismayil/flask_dash/data/huawei/pool
+sshpass -p "qarftp" scp qarftp@10.240.104.155:Huawei/*interf_ta.csv /home/ismayil/flask_dash/data/huawei/pool
+#sshpass -p "qarftp" scp qarftp@10.240.104.155:Nokia/CMG*.zip /home/ismayil/flask_dash/data/nokia/pool 
+
+
+#sshpass -p "qarftp" scp qarftp@10.240.104.155:Nokia/*CE_Util*.csv /home/ismayil/flask_dash/data/utilization 
+#sshpass -p "qarftp" scp qarftp@10.240.104.155:Nokia/*LCG*.csv /home/ismayil/flask_dash/data/utilization 
+#sshpass -p "qarftp" scp qarftp@10.240.104.155:Nokia/*LTE_Frame*.csv /home/ismayil/flask_dash/data/utilization 
+#sshpass -p "qarftp" scp qarftp@10.240.104.155:Nokia/*Power*.csv /home/ismayil/flask_dash/data/utilization 
+#sshpass -p "qarftp" scp qarftp@10.240.104.155:Nokia/*PRB_Util*.csv /home/ismayil/flask_dash/data/utilization 
+#sshpass -p "qarftp" scp qarftp@10.240.104.155:Nokia/*RSRAN131*.csv /home/ismayil/flask_dash/data/utilization 
+#sshpass -p "qarftp" scp qarftp@10.240.104.155:Nokia/*3G_FRM*.csv /home/ismayil/flask_dash/data/utilization 
+sshpass -p "qarftp" scp qarftp@10.240.104.155:Huawei/*LTE_PRB*.csv /home/ismayil/flask_dash/data/utilization 
+sshpass -p "qarftp" scp qarftp@10.240.104.155:Huawei/*LTE_RRC*.csv /home/ismayil/flask_dash/data/utilization 
+sshpass -p "qarftp" scp qarftp@10.240.104.155:Huawei/*IPPM*.csv /home/ismayil/flask_dash/data/utilization 
+sshpass -p "qarftp" scp qarftp@10.240.104.155:Huawei/*Frame_Loss*.csv /home/ismayil/flask_dash/data/utilization 
+sshpass -p "qarftp" scp qarftp@10.240.104.155:Huawei/*3G_TCP*.csv /home/ismayil/flask_dash/data/utilization 
+
+python3.8 /home/ismayil/flask_dash/support_files/scripts/distribute_files.py

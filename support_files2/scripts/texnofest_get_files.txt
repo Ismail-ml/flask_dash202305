@@ -1,0 +1,8 @@
+#!/bin/bash
+
+#sshpass -p "qarftp" scp qarftp@10.240.104.155:Nokia/*counter*hourly*.csv /home/ismayil/flask_dash/data/nokia/pool
+sshpass -p "qarftp" scp qarftp@10.240.104.155:Nokia/Crystal*.zip /home/ismayil/flask_dash/data/nokia 
+sshpass -p "qarftp" scp qarftp@10.240.104.155:Huawei/*crystal*.csv /home/ismayil/flask_dash/data/huawei 
+
+
+python3.8 /home/ismayil/flask_dash/support_files/scripts/distribute_files_texnofest.py

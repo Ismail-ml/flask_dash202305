@@ -1,0 +1,5 @@
+#!/bin/bash
+
+sshpass -p "install10" scp root@10.64.2.226:$(sshpass -p "install10" ssh root@10.64.2.226 'ls -t /opt/nsp/nfmp/server/xml_output/performanceStats/ossclient/*15Min*.xml | head -1') /home/qarftp/Tx_Nokia 
+
+

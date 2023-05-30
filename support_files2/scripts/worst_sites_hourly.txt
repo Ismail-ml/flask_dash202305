@@ -1,0 +1,213 @@
+import pandas as pd
+from datetime import datetime as dt
+import datetime
+import os
+import numpy as np
+from datetime import date
+days_back=1
+ddd=datetime.datetime.strftime(datetime.datetime.now()-datetime.timedelta(hours=6),"%Y-%m-%d %H:%M:%S")
+uuu=datetime.datetime.now()-datetime.timedelta(3)
+week=datetime.datetime.now()-datetime.timedelta(3)
+start_date=datetime.datetime.strftime(datetime.datetime.now()-datetime.timedelta(hours=6),"%Y-%m-%d %H:%M:%S")
+files=pd.date_range(date.today()-datetime.timedelta(3),date.today(),
+              freq='D').strftime("%Y-%m-%d").tolist()
+should_be=pd.date_range(date.today()-datetime.timedelta(7),date.today()-datetime.timedelta(1),
+              freq='D').strftime("%d.%m.%Y").tolist()
+to_extract=datetime.datetime.now()-datetime.timedelta(3)
+
+# 2G Begin
+print('2G begin')
+to_concat=[]
+for i in set(files):
+        if os.path.isfile(os.path.join('/disk2/support_files/archive/ran',i+'.h5')):
+            to_concat.append(pd.read_hdf(os.path.join('/disk2/support_files/archive/ran',
+                                                      i+'.h5'),key='/twoG',where=['Date>=start_date']))
+df=pd.concat(to_concat) 
+dfd=df.groupby(['Date','Site_name','Region']).sum()
+dfd.reset_index(inplace=True)
+tracker=pd.read_csv('/home/ismayil/flask_dash/support_files/tracker.csv')
+dfd['lookup']=dfd['Site_name'].apply(lambda x: x[1:8])
+dfdn=dfd.merge(tracker[['SITE_ID','Lat','Long','Site Name']],how='left',left_on='lookup',right_on='SITE_ID')
+dfdn['2G Call fails'] = dfdn['cssr_den2']+dfdn['cssr_den3']-dfdn['cssr_num2']-dfdn['cssr_num3']+dfdn['cssr_num1']
+dfdn['2G Call drops'] = dfdn['drop_rate_num']
+dfdn['Call blocks']=dfdn['call_block_rate_num']
+dfdn['SDCCH blocks']=dfdn['sdcch_block_rate_num']
+dfdn['SDCCH drops']=dfdn['sdcch_drop_rate_num']
+dfdn['2G Cell Availability'] = round((dfdn['cell_avail_num'] + dfdn['cell_avail_blck_num']) / (
+            dfdn['cell_avail_den'] - dfdn['cell_avail_blck_den']) * 100,2)
+dfdn['Cell Availability'] = round((dfdn['cell_avail_num'] + dfdn['cell_avail_blck_num']) / (
+            dfdn['cell_avail_den'] - dfdn['cell_avail_blck_den']) * 100,2)
+worst_sites=[]
+for j in dfdn['Date'].unique():
+    for i in ['2G Call fails','2G Call drops','2G Cell Availability']:
+        if i!='2G Cell Availability':
+            dfdnn=dfdn[dfdn['Date']==j].sort_values(by=i,ascending=False)
+        else: dfdnn=dfdn[dfdn['Date']==j].sort_values(by=i,ascending=True)
+        dfdnn['KPI name']=i
+        dfdnn['KPI Value']=dfdnn[i]
+        worst_sites.append(dfdnn[['Date','Site_name']][:15])
+h=pd.DataFrame(np.array([i.values for i in worst_sites]).reshape(-1,2),columns=worst_sites[0].columns)
+sites=h
+
+unique_sites=sites['Site_name'].unique()
+print('2G unique sites finishded')
+# fdfdsfdsf
+to_concat=[]
+for i in set(files):
+        if os.path.isfile(os.path.join('/disk2/support_files/archive/ran',i+'.h5')):
+            to_concat.append(pd.read_hdf(os.path.join('/disk2/support_files/archive/ran',
+                                                      i+'.h5'),key='/twoG',where=['Date>=week and Site_name in unique_sites']))
+df=pd.concat(to_concat) 
+dfd=df.groupby(['Date','Site_name','Region']).sum()
+dfd.reset_index(inplace=True)
+dfd['lookup']=dfd['Site_name'].apply(lambda x: x[1:8])
+dfdn=dfd.merge(tracker[['SITE_ID','Lat','Long','Site Name']],how='left',left_on='lookup',right_on='SITE_ID')
+dfdn['2G Call fails'] = dfdn['cssr_den2']+dfdn['cssr_den3']-dfdn['cssr_num2']-dfdn['cssr_num3']+dfdn['cssr_num1']
+dfdn['2G Call drops'] = dfdn['drop_rate_num']
+dfdn['Call blocks']=dfdn['call_block_rate_num']
+dfdn['SDCCH blocks']=dfdn['sdcch_block_rate_num']
+dfdn['SDCCH drops']=dfdn['sdcch_drop_rate_num']
+dfdn['2G Cell Availability'] = round((dfdn['cell_avail_num'] + dfdn['cell_avail_blck_num']) / (
+            dfdn['cell_avail_den'] - dfdn['cell_avail_blck_den']) * 100,2)
+dfdn['Cell Availability'] = round((dfdn['cell_avail_num'] + dfdn['cell_avail_blck_num']) / (
+            dfdn['cell_avail_den'] - dfdn['cell_avail_blck_den']) * 100,2)
+
+
+worst_sites_2G=dfdn
+new=[]
+for i in ['2G Call fails','2G Call drops','2G Cell Availability']:
+    worst_sites_2G['KPI name']=i
+    worst_sites_2G['KPI value']=worst_sites_2G[i]
+    new.append(worst_sites_2G[['Date','Site_name','Site Name','Region','Lat','Long','KPI name','KPI value','Cell Availability']])
+final_df=pd.concat(new)
+final_df.rename(columns={'Site_name':'Site Id'},inplace=True)
+final_df.to_csv(r'/home/ismayil/flask_dash/support_files/worst_sites_hourly.csv')
+print('2G finished')
+
+
+to_concat=[]
+for i in set(files):
+        if os.path.isfile(os.path.join('/disk2/support_files/archive/ran',i+'.h5')):
+            to_concat.append(pd.read_hdf(os.path.join('/disk2/support_files/archive/ran',
+                                                      i+'.h5'),key='/threeG',where=['Date>=start_date']))
+df3=pd.concat(to_concat) 
+df3d=df3.groupby(['Date','Site_name','Region']).sum()
+df3d.reset_index(inplace=True)
+df3d['lookup']=df3d['Site_name'].apply(lambda x: x[1:8])
+df3dn=df3d.merge(tracker[['SITE_ID','Lat','Long','Site Name']],how='left',left_on='lookup',right_on='SITE_ID')
+df3dn['3G Call fails'] = df3dn['voice_sr_den1']+df3dn['voice_sr_den2']-df3dn['voice_sr_num1']-df3dn['voice_sr_num2']
+df3dn['3G Call drops'] = df3dn['voice_dr_num']
+df3dn['3G HSDPA fails'] = df3dn['hsdpa_sr_den']-df3dn['hsdpa_sr_num']
+df3dn['3G HSDPA drops'] = df3dn['hsdpa_dr_num']
+df3dn['3G Cell Availability'] = round(100*(df3dn['cell_avail_num']+
+                                           df3dn['cell_avail_blck_num'])/(df3dn['cell_avail_den']-df3dn['cell_avail_blck_den']),2)
+df3dn['Cell Availability'] = round(100*(df3dn['cell_avail_num']+
+                                           df3dn['cell_avail_blck_num'])/(df3dn['cell_avail_den']-df3dn['cell_avail_blck_den']),2)
+worst_sites_3G=[]
+for j in df3dn['Date'].unique():
+    for i in ['3G Call fails','3G Call drops','3G HSDPA fails','3G HSDPA drops','3G Cell Availability']:
+        if i!='3G Cell Availability':
+            df3dnn=df3dn[df3dn['Date']==j].sort_values(by=i,ascending=False)
+        else: df3dnn=df3dn[df3dn['Date']==j].sort_values(by=i,ascending=True)
+        df3dnn['KPI name']=i
+        df3dnn['KPI Value']=df3dnn[i]
+        worst_sites_3G.append(df3dnn[['Date','Site_name']][:15])
+h=pd.DataFrame(np.array([i.values for i in worst_sites_3G]).reshape(-1,2),columns=worst_sites_3G[0].columns)
+sites=sites.append(h)
+unique_sites=sites['Site_name'].unique()
+print('3G unique sites finishded')
+# sfdsfdsfdsfds
+to_concat=[]
+for i in set(files):
+        if os.path.isfile(os.path.join('/disk2/support_files/archive/ran',i+'.h5')):
+            to_concat.append(pd.read_hdf(os.path.join('/disk2/support_files/archive/ran',
+                                                      i+'.h5'),key='/threeG',where=['Date>=week and Site_name in unique_sites']))
+df3=pd.concat(to_concat) 
+df3d=df3.groupby(['Date','Site_name','Region']).sum()
+df3d.reset_index(inplace=True)
+df3d['lookup']=df3d['Site_name'].apply(lambda x: x[1:8])
+df3dn=df3d.merge(tracker[['SITE_ID','Lat','Long','Site Name']],how='left',left_on='lookup',right_on='SITE_ID')
+df3dn['3G Call fails'] = df3dn['voice_sr_den1']+df3dn['voice_sr_den2']-df3dn['voice_sr_num1']-df3dn['voice_sr_num2']
+df3dn['3G Call drops'] = df3dn['voice_dr_num']
+df3dn['3G HSDPA fails'] = df3dn['hsdpa_sr_den']-df3dn['hsdpa_sr_num']
+df3dn['3G HSDPA drops'] = df3dn['hsdpa_dr_num']
+df3dn['3G Cell Availability'] = round(100*(df3dn['cell_avail_num']+
+                                           df3dn['cell_avail_blck_num'])/(df3dn['cell_avail_den']-df3dn['cell_avail_blck_den']),2)
+df3dn['Cell Availability'] = round(100*(df3dn['cell_avail_num']+
+                                           df3dn['cell_avail_blck_num'])/(df3dn['cell_avail_den']-df3dn['cell_avail_blck_den']),2)
+
+
+worst_sites_3G=df3dn
+new_3G=[]
+for i in ['3G Call fails','3G Call drops','3G HSDPA fails','3G HSDPA drops','3G Cell Availability']:
+    worst_sites_3G['KPI name']=i
+    worst_sites_3G['KPI value']=worst_sites_3G[i]
+    new_3G.append(worst_sites_3G[['Date','Site_name','Site Name','Region','Lat','Long','KPI name','KPI value','Cell Availability']])
+final_df3=pd.concat(new_3G)
+final_df3.rename(columns={'Site_name':'Site Id'},inplace=True)
+final_df3.to_csv(r'/home/ismayil/flask_dash/support_files/worst_sites_hourly.csv',mode='a',header=False)
+print('3G finished')
+
+# 4G Begin
+to_concat=[]
+for i in set(files):
+        if os.path.isfile(os.path.join('/disk2/support_files/archive/ran',i+'.h5')):
+            to_concat.append(pd.read_hdf(os.path.join('/disk2/support_files/archive/ran',
+                                                      i+'.h5'),key='/fourG',where=['Date>=start_date']))
+df4=pd.concat(to_concat) 
+df4d=df4.groupby(['Date','Site_name','Region']).sum()
+df4d.reset_index(inplace=True)
+#tracker=pd.read_csv(r'Downloads/tracker.csv')
+df4d['lookup']=df4d['Site_name'].apply(lambda x: x[1:8])
+df4dn=df4d.merge(tracker[['SITE_ID','Lat','Long','Site Name']],how='left',left_on='lookup',right_on='SITE_ID')
+df4dn['4G RRC fails'] = df4dn['rrc_sr_den']-df4dn['rrc_sr_num']
+df4dn['4G RAB fails'] = df4dn['rab_sr_den']-df4dn['rab_sr_num']
+df4dn['4G Session drops'] = df4dn['dcr_num']
+df4dn['4G CSFB fails'] = df4dn['csfb_sr_den']-df4dn['csfb_sr_num']
+df4dn['4G Cell Availability'] = round(100*(df4dn['cell_avail_num']+df4dn['cell_avail_blck_num'])/(df4dn['cell_avail_den']-
+                                                                                                  df4dn['cell_avail_blck_den']),2)
+df4dn['Cell Availability'] = round(100*(df4dn['cell_avail_num']+df4dn['cell_avail_blck_num'])/(df4dn['cell_avail_den']-
+                                                                                                  df4dn['cell_avail_blck_den']),2)
+worst_sites_4G=[]
+for j in df4dn['Date'].unique():
+    for i in ['4G RRC fails','4G RAB fails','4G Session drops','4G CSFB fails','4G Cell Availability']:
+        if i!='4G Cell Availability':
+            df4dnn=df4dn[df4dn['Date']==j].sort_values(by=i,ascending=False)
+        else: df4dnn=df4dn[df4dn['Date']==j].sort_values(by=i,ascending=True)
+        df4dnn['KPI name']=i
+        df4dnn['KPI Value']=df4dnn[i]
+        worst_sites_4G.append(df4dnn[['Date','Site_name']][:15])
+h=pd.DataFrame(np.array([i.values for i in worst_sites_4G]).reshape(-1,2),columns=worst_sites_4G[0].columns)
+sites=sites.append(h)    
+unique_sites=sites['Site_name'].unique()
+print('4G unique sites finishded')
+# gdfgfdgdg
+to_concat=[]
+for i in set(files):
+        if os.path.isfile(os.path.join('/disk2/support_files/archive/ran',i+'.h5')):
+            to_concat.append(pd.read_hdf(os.path.join('/disk2/support_files/archive/ran',
+                                                      i+'.h5'),key='/fourG',where=['Date>=week and Site_name in unique_sites']))
+df4=pd.concat(to_concat) 
+df4d=df4.groupby(['Date','Site_name','Region']).sum()
+df4d.reset_index(inplace=True)
+df4d['lookup']=df4d['Site_name'].apply(lambda x: x[1:8])
+df4dn=df4d.merge(tracker[['SITE_ID','Lat','Long','Site Name']],how='left',left_on='lookup',right_on='SITE_ID')
+df4dn['4G RRC fails'] = df4dn['rrc_sr_den']-df4dn['rrc_sr_num']
+df4dn['4G RAB fails'] = df4dn['rab_sr_den']-df4dn['rab_sr_num']
+df4dn['4G Session drops'] = df4dn['dcr_num']
+df4dn['4G CSFB fails'] = df4dn['csfb_sr_den']-df4dn['csfb_sr_num']
+df4dn['4G Cell Availability'] = round(100*(df4dn['cell_avail_num']+df4dn['cell_avail_blck_num'])/(df4dn['cell_avail_den']-
+                                                                                                  df4dn['cell_avail_blck_den']),2)
+df4dn['Cell Availability'] = round(100*(df4dn['cell_avail_num']+df4dn['cell_avail_blck_num'])/(df4dn['cell_avail_den']-
+                                                                                                  df4dn['cell_avail_blck_den']),2)
+
+worst_sites_4G=df4dn
+new=[]
+for i in ['4G RRC fails','4G RAB fails','4G Session drops','4G CSFB fails','4G Cell Availability']:
+    worst_sites_4G['KPI name']=i
+    worst_sites_4G['KPI value']=worst_sites_4G[i]
+    new.append(worst_sites_4G[['Date','Site_name','Site Name','Region','Lat','Long','KPI name','KPI value','Cell Availability']])
+
+    final_df4=pd.concat(new)
+final_df4.rename(columns={'Site_name':'Site Id'},inplace=True)
+final_df4.to_csv(r'/home/ismayil/flask_dash/support_files/worst_sites_hourly.csv',mode='a',header=False)
