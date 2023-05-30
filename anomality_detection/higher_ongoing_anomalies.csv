@@ -1,0 +1,2 @@
+Date,tech,Vendor,NE,variable,value,threshold,Fails_and_drops_average_15_day,Fails_and_drops_last_hour,Cell Availability,c_days,status
+2023-05-30 08:00:00,2G,Huawei,HBSC02,SDCCH Block Rate,0.0035476403756951,0.0027666263200441,0.43333333333333335,4.0,96.82707355242567,1,-1.0

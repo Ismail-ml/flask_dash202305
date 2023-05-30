@@ -1,0 +1,49 @@
+import pandas as pd
+a=pd.read_csv(r'/home/ismayil/flask_dash/support_files/anomality_detection/daily_traffic_check.csv')
+a.rename(columns={'index':'date'},inplace=True)
+a['date']=pd.to_datetime(a['date'])
+###############
+techs={'/twoG':'2G','/threeG':'3G','/fourG':'4G'}
+for tech in techs.keys():
+    b=set(a[(a['traf'].isnull()) & (a['tech']==techs[tech])].rename(columns={'Unnamed: 0':'date'}).date.values)
+    d=pd.read_hdf('/disk2/support_files/archive/combined_bsc.h5',tech ,where='Date in b')
+    if tech=='/fourG':
+        d.loc[:,'data traf']=d['dl_ps_traf']+d['ul_ps_traf']
+    d.rename(columns={'cs_traffic_erl':'cs traf','ps_traffic_mb':'data traf',
+                       'cs_traf':'cs traf','ps_traf':'data traf'},inplace=True)
+    dg=d.groupby(['Date','Region']).sum().reset_index()
+    for traf in ['cs traf','data traf']:
+        if (tech=='/fourG') and (traf=='cs traf'): continue
+        a=a.merge(dg[['Date','Region',traf]],left_on=['date','region'],right_on=['Date','Region'],how='left')
+        filt=(a['traf'].isnull()) & (a['tech']==techs[tech]) & (a['kpi']==traf)
+        a.loc[filt,'traf']=a.loc[filt,traf]
+        a.drop(columns=a.columns[-3:],inplace=True)
+##############
+
+a['status']=0
+a.loc[(a['traf']>a['upper']),'status']=1
+a.loc[(a['traf']<a['lower']),'status']=2
+a['delta_from_threshold_U']=100*(a['traf']-a['upper'])/a['upper']
+a['delta_from_threshold_L']=100*(a['lower']-a['traf'])/a['lower']
+a['delta_from_threshold']=a[['delta_from_threshold_U','delta_from_threshold_L']].max(axis=1)
+a.drop(columns=['delta_from_threshold_L','delta_from_threshold_U'],inplace=True)
+a.to_csv('/home/ismayil/flask_dash/support_files/anomality_detection/daily_traffic_check.csv',index=False)
+last_hour=a.loc[a['traf'].notnull(),'date'].sort_values().values[-1]
+anomalies = pd.read_csv('/home/ismayil/flask_dash/support_files/anomality_detection/anomalies_traffic.csv')
+#anomalies=a[(a['date']==last_hour) & (a['status']>0)]
+#df = pd.read_csv('/home/ismayil/flask_dash/support_files/anomality_detection/daily_traffic_check.csv')
+anomalies[['region','kpi','tech']]=anomalies[['region','kpi','tech']].astype('object')
+if len(a[a['status']>0])==0:
+    anomalies.loc[-1]=0
+    anomalies=pd.DataFrame(columns=anomalies.loc[-1].index,data=anomalies.loc[-1].values.reshape(1,-1))
+else:
+    anomalies = a[(a['status'] > 0) & (a['date']==last_hour)].merge(anomalies[['region', 'kpi', 'tech', 'status','c_days']],
+                                         on=['region', 'kpi','tech'], how='left')
+    anomalies.loc[anomalies['c_days'].notnull(), 'c_days'] += 1
+    anomalies.loc[anomalies['c_days'].isnull(), 'c_days'] = 1
+    anomalies.rename(columns={'status_x': 'status'}, inplace=True)
+    anomalies.drop(columns='status_y', inplace=True)
+anomalies.to_csv('/home/ismayil/flask_dash/support_files/anomality_detection/anomalies_traffic.csv')
+if pd.Series(last_hour).dt.strftime("%H").values=='22':
+    a.to_hdf('/disk2/support_files/archive/'+pd.Series(last_hour).dt.strftime("%B_%Y")+'_anomalies.h5','/traffic_check',
+                     append=True,format='table',data_columns=a.columns,complevel=5)

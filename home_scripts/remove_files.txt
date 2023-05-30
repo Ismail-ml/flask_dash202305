@@ -1,0 +1,13 @@
+#!/bin/bash
+
+rm -f /home/qarftp/Nokia/*.csv
+rm -f /home/qarftp/Nokia/*.xlsx
+rm -f /home/qarftp/Huawei/*.csv
+rm -f /home/qarftp/missing/nokia/*.csv
+rm -f /home/qarftp/missing/nokia/*.zip
+rm -f /home/qarftp/missing/huawei/*.csv
+rm -f /home/qarftp/Tx/*.csv
+rm -f /home/qarftp/dump.zip
+rm -f /home/qarftp/Azerconnect_RNP_tracker.xlsx
+rm -f /home/qarftp/Tx_Nokia/*.xml
+

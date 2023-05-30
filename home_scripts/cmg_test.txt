@@ -1,0 +1,29 @@
+import pandas as pd
+import os
+import glob
+import zipfile
+
+os.chdir('/home/qarftp/Nokia')
+apn_mapping=pd.read_csv('/home/qarftp/apn_mapping.csv')
+traf=[]
+
+filenames=glob.glob('*.zip')
+
+for filename in filenames:
+    files=zipfile.ZipFile(filename,'r')
+    cmg=pd.read_csv(files.open(files.namelist()[-1]),sep=';')
+    cmg['Date']=pd.to_datetime(cmg['PERIOD_START_TIME'],format='%m.%d.%Y %H:%M:%S')
+    cmg.rename(columns={'PGW Downlink Data Volume, APN':'4G DL',
+                    'PGW Uplink Data Volume, APN':'4G UL',
+                        'apn_id':'APN'},inplace=True)
+    cmg['2G/3G DL']=0
+    cmg['2G/3G UL']=0
+    cmg=cmg[['Date','APN','CMG name','4G DL','4G UL','2G/3G DL','2G/3G UL']]
+    cmg=cmg[~cmg['CMG name'].str.contains('CMG-CP')]
+    cmg=cmg.merge(apn_mapping,how='left', left_on='APN', right_on='APN ID')
+    cmg=cmg[['Date','MNO','APN','CMG name','2G/3G DL','2G/3G UL','4G DL','4G UL']]
+    cmg[['2G/3G DL','2G/3G UL','4G DL','4G UL']]=cmg[['2G/3G DL','2G/3G UL','4G DL','4G UL']].astype('float')
+    traf.append(cmg)
+
+concated= pd.concat(traf)
+print(concated['Date'].unique())

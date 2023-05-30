@@ -1,0 +1,19 @@
+import os
+import pandas as pd
+os.chdir(r'/home/ismayil/flask_dash/support_files/anomality_detection')
+files=sorted(os.listdir(), key=os.path.getctime)[-4:-2]
+for i in files:
+    if 'higher' in i:
+        level='higher'
+        lookup='NE'
+    else:
+        level='site'
+        lookup='Site_name'
+    anomalies=pd.read_csv('anomalies_'+level+'_level.csv')
+    df=pd.read_csv(i)
+    anomalies=df[df['status']==-1].merge(anomalies[[lookup,'variable','status','c_days']],on=[lookup,'variable'],how='left')
+    anomalies.loc[anomalies['c_days'].notnull(),'c_days']+=1
+    anomalies.loc[anomalies['c_days'].isnull(),'c_days']=1
+    anomalies.rename(columns={'status_x':'status'},inplace=True)
+    anomalies.drop(columns='status_y',inplace=True)
+    anomalies.to_csv('anomalies_'+level+'_level.csv',index=False)

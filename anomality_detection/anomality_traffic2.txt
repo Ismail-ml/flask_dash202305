@@ -1,0 +1,83 @@
+import pandas as pd
+import datetime
+import os
+a=pd.read_csv('/home/ismayil/flask_dash/support_files/anomality_detection/daily_traffic_check.csv')
+a.rename(columns={'index':'date'},inplace=True)
+a['date']=pd.to_datetime(a['date'])
+needed=datetime.datetime.now()+datetime.timedelta(days=-7*5)
+###############
+techs={'/twoG':'2G','/threeG':'3G','/fourG':'4G'}
+all_35=[]
+for tech in techs.keys():
+    b=set(a[(a['traf'].isnull()) & (a['tech']==techs[tech])].rename(columns={'Unnamed: 0':'date'}).date.values)
+    d=pd.read_hdf('/disk2/support_files/archive/combined_bsc.h5',tech ,where='Date in b')
+    aa=pd.read_hdf('/disk2/support_files/archive/combined_bsc.h5',tech,where='Date>=needed')
+    if tech=='/fourG':
+        d.loc[:,'data traf']=d['dl_ps_traf']+d['ul_ps_traf']
+        aa.loc[:,'data traf']=aa['dl_ps_traf']+aa['ul_ps_traf']
+        aa['cs traf']=0
+    d.rename(columns={'cs_traffic_erl':'cs traf','ps_traffic_mb':'data traf',
+                       'cs_traf':'cs traf','ps_traf':'data traf'},inplace=True)
+    aa.rename(columns={'cs_traffic_erl':'cs traf','ps_traffic_mb':'data traf',
+                       'cs_traf':'cs traf','ps_traf':'data traf'},inplace=True)
+    dg=d.groupby(['Date','Region']).sum().reset_index()
+    aa.insert(1,'tech',techs[tech])
+    all_35.append(aa.groupby(['Date','Region','tech']).sum()[['cs traf','data traf']].reset_index())
+    for traf in ['cs traf','data traf']:
+        if (tech=='/fourG') and (traf=='cs traf'): continue
+        a=a.merge(dg[['Date','Region',traf]],left_on=['date','region'],right_on=['Date','Region'],how='left')
+        filt=(a['traf'].isnull()) & (a['tech']==techs[tech]) & (a['kpi']==traf)
+        a.loc[filt,'traf']=a.loc[filt,traf]
+        a.drop(columns=a.columns[-3:],inplace=True)
+a.to_csv('/home/ismayil/flask_dash/support_files/anomality_detection/daily_traffic_check.csv',index=False)
+    
+aaa=pd.concat(all_35)
+
+aaa['hour']=aaa['Date'].dt.hour
+aaa['is_weekday'] = [i.isoweekday() for i in aaa['Date']]
+
+aaa.loc[aaa['is_weekday'].isin([1, 2, 3, 4, 5]), 'is_weekday'] = 1
+aaa.loc[aaa['is_weekday'].isin([6, 7]), 'is_weekday'] = 2
+aaa=aaa.melt(id_vars=['Date','Region','tech','hour','is_weekday'],value_vars=['cs traf','data traf'])
+mean=aaa.groupby(['Region','tech','hour','is_weekday','variable']).mean().reset_index()
+std=aaa.groupby(['Region','tech','hour','is_weekday','variable']).std().reset_index()
+df_n=aaa.merge(mean.rename(columns={'value':'mean'}),how='left',on=['Region','tech','hour','is_weekday','variable'])
+df_n=df_n.merge(std.rename(columns={'value':'std'}),how='left', on=['Region','tech','hour','is_weekday','variable'])
+df_n['status']=0
+df_n.loc[(df_n['value']>(df_n['mean']+3*df_n['std'])),'status'] = 1
+df_n.loc[(df_n['value']<(df_n['mean']-3*df_n['std'])),'status'] = -1
+df_n.sort_values(by='Date',inplace=True)
+df_nn=df_n[df_n['Date']==df_n['Date'].iloc[-1]]
+if len(df_nn[df_nn['status']!=0])>0:
+    final=df_nn[df_nn['status']!=0]
+    final.to_csv('/home/ismayil/flask_dash/support_files/anomality_detection/traffic_anomalies.csv',
+                                    index=False)
+    if os.path.exists('/home/ismayil/flask_dash/support_files/anomality_detection/traffic_ongoing_anomalies.csv'):
+        anomalies = pd.read_csv('/home/ismayil/flask_dash/support_files/anomality_detection/traffic_ongoing_anomalies.csv')
+        anomalies = final.merge(anomalies[['Region','tech','hour','is_weekday','variable', 'status', 'c_days']],
+                            on=['Region','tech','hour','is_weekday','variable'], how='left')
+    else:
+        anomalies=final
+        anomalies['c_days']=0
+        anomalies['status_y']=0
+        anomalies.reanem(columns={'status':'status_x'},inplace=True)
+
+    anomalies.loc[anomalies['c_days'].notnull(), 'c_days'] += 1
+    anomalies.loc[anomalies['c_days'].isnull(), 'c_days'] = 1
+    anomalies.rename(columns={'status_x': 'status'}, inplace=True)
+    anomalies.drop(columns='status_y', inplace=True)
+    anomalies['Date']=pd.to_datetime(anomalies['Date'])
+    #print(anomalies)
+    #if len(anomalies[anomalies['status']!=0])>0:                                                    #### pd.Series(df_nn['Date'].iloc[-1]).dt.strftime("%B_%Y")
+    anomalies.to_csv('/home/ismayil/flask_dash/support_files/anomality_detection/traffic_ongoing_anomalies.csv',index=False)
+    for d in anomalies['Date'].dt.date.unique():
+        file_name2 = datetime.datetime.strftime(d, "%B_%Y")
+        anomalies.loc[anomalies['Date'].dt.date==d].to_hdf(
+            '/disk2/support_files/archive/anomality/' + file_name2 + '_anomalies.h5','/traffic_check', 
+            append=True, format='table',data_columns=anomalies.columns,complevel=5)
+else:
+    if os.path.exists('/home/ismayil/flask_dash/support_files/anomality_detection/traffic_ongoing_anomalies.csv'):
+        #os.remove('/home/ismayil/flask_dash/support_files/anomality_detection/traffic_ongoing_anomalies.csv')
+        anomalies=df_nn[df_nn['status']!=0]
+        anomalies['c_days']=0
+        anomalies.to_csv('/home/ismayil/flask_dash/support_files/anomality_detection/traffic_ongoing_anomalies.csv',index=False)

@@ -1,0 +1,20 @@
+#!/bin/bash
+
+#rm -f /home/qarftp/Tx_Nokia/*.xml
+
+sshpass -p "install10" scp root@10.64.2.234:$(sshpass -p "install10" ssh root@10.64.2.234 \
+'ls -t /opt/nsp/nfmp/server/xml_output/performanceStats/ossclient/radioequipment.RSLHopCurrentDataStats15Min*.xml | head -1') /home/qarftp/Tx_Nokia 
+
+sshpass -p "install10" scp root@10.64.2.234:$(sshpass -p "install10" ssh root@10.64.2.234 \
+'ls -t /opt/nsp/nfmp/server/xml_output/performanceStats/ossclient/radioequipment.TSLHopCurrentDataStats15Min*.xml | head -1') /home/qarftp/Tx_Nokia 
+
+sshpass -p "install10" scp root@10.64.2.234:$(sshpass -p "install10" ssh root@10.64.2.234 \
+'ls -t /opt/nsp/nfmp/server/xml_output/performanceStats/ossclient/radioequipment.AdaptiveModulationCurrentDataStats15Min*.xml | head -1') /home/qarftp/Tx_Nokia 
+
+sshpass -p "install10" scp root@10.64.2.234:$(sshpass -p "install10" ssh root@10.64.2.234 \
+'ls -t /opt/nsp/nfmp/server/xml_output/performanceStats/ossclient/ethernetequipment.AggrMaintRxStats*.xml | head -1') /home/qarftp/Tx_Nokia 
+
+sshpass -p "install10" scp root@10.64.2.234:$(sshpass -p "install10" ssh root@10.64.2.234 \
+'ls -t /opt/nsp/nfmp/server/xml_output/performanceStats/ossclient/ethernetequipment.AggrMaintTxStats*.xml | head -1') /home/qarftp/Tx_Nokia 
+
+

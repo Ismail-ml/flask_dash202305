@@ -1,0 +1,115 @@
+# Once a day to predict 24 hour traffic information
+import pandas as pd
+import numpy as np
+import scipy
+import os, datetime
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.preprocessing import LabelEncoder
+
+# os.chdir(r'D:\disk_E\Desktop\Export\Python\1\Anomality')
+a = datetime.datetime.strptime(datetime.datetime.strftime(datetime.datetime.today(), '%d.%m.%Y') + ' 22:00',
+                               '%d.%m.%Y %H:%M')
+for_graph = datetime.datetime.strptime(datetime.datetime.strftime(datetime.datetime.today(), '%d.%m.%Y') + ' 22:00',
+                                       '%d.%m.%Y %H:%M') - datetime.timedelta(days=7)
+daterange = pd.date_range(end=a, freq='H', periods=7 * 4 * 24 - 1)
+le = LabelEncoder()
+model = RandomForestRegressor()
+techs = {'/twoG': '2G', '/threeG': '3G', '/fourG': '4G'}
+
+
+def mean_confidence_interval(data, confidence=0.95):
+    a = 1.0 * np.array(data)
+    n = len(a)
+    m, se = np.mean(a), scipy.stats.sem(a)
+    h = se * scipy.stats.t.ppf((1 + confidence) / 2., n - 1)
+    return m, m - h, m + h
+
+
+for tech in techs.keys():
+    df = pd.read_hdf('/disk2/support_files/archive/combined_bsc.h5', tech,
+                     where='Date >= daterange[0] and Date <= daterange[-1]')
+    if tech == '/fourG':
+        df.loc[:, 'data traf'] = df['dl_ps_traf'] + df['ul_ps_traf']
+    df.rename(columns={'cs_traffic_erl': 'cs traf', 'ps_traffic_mb': 'data traf',
+                       'cs_traf': 'cs traf', 'ps_traf': 'data traf',
+                       'Date': 'date', 'Region': 'region'}, inplace=True)
+    df = df.groupby(['date', 'region']).sum().reset_index()
+    for traf in ['cs traf', 'data traf']:
+        if (tech == '/fourG') and (traf == 'cs traf'): continue
+        df_test = df[['date', traf, 'region']].copy()
+
+        # df_test.reset_index(inplace=True)
+        df_test.loc[:, 'date'] = pd.to_datetime(df_test['date'])
+        df_test.set_index('date', inplace=True)
+        # print(df_test.tail())
+        # df_test['day_name'] = [i.day_name() for i in df_test.index]
+        # df_test['day_of_year'] = [i.dayofyear for i in df_test.index]
+        # df_test['week_of_year'] = [i.weekofyear for i in df_test.index]
+        df_test.loc[:, 'hour'] = [i.hour for i in df_test.index]
+        df_test.loc[:, 'is_weekday'] = [i.isoweekday() for i in df_test.index]
+        df_test.loc[:, 'day'] = [i.day for i in df_test.index]
+        df_test.loc[df_test['is_weekday'].isin([1, 2, 3, 4, 5]), 'is_weekday'] = 1
+        df_test.loc[df_test['is_weekday'].isin([6, 7]), 'is_weekday'] = 2
+        i = df_test['region']
+        df_test.drop(columns='region', inplace=True)
+        df_test.loc[:, 'region'] = i
+        # from pycaret.regression import *
+        # s = setup(df_test.iloc[:-960], session_id = 123,target='data traf')
+        # model=create_model('rf')
+        df_test['region2'] = le.fit_transform(df_test['region'])
+        model.fit(df_test[['hour', 'is_weekday', 'day', 'region2']], df_test[traf])
+
+        k = pd.DataFrame(index=pd.date_range(start=a - datetime.timedelta(hours=-1), periods=25, freq='H'),
+                         columns=['traf'])
+        # df_test['day_name'] = [i.day_name() for i in df_test.index]
+        # df_test['day_of_year'] = [i.dayofyear for i in df_test.index]
+        # df_test['week_of_year'] = [i.weekofyear for i in df_test.index]
+        k.loc[:, 'hour'] = [i.hour for i in k.index]
+        k.loc[:, 'is_weekday'] = [i.isoweekday() for i in k.index]
+        k.loc[:, 'day'] = [i.day for i in k.index]
+        k.loc[k['is_weekday'].isin([1, 2, 3, 4, 5]), 'is_weekday'] = 1
+        k.loc[k['is_weekday'].isin([6, 7]), 'is_weekday'] = 2
+
+        u = []
+        for i in df['region'].unique():
+            # print(i)
+            p = k.copy()
+            p.loc[:, 'region'] = i
+            # print(p.head())
+            u.append(p)
+        k = pd.concat(u)
+
+        df1 = df_test
+        for j in df1['region'].unique():
+            for w in range(1, 3):
+                for i in range(0, 24):
+                    filt = (df1.index.hour == i) & (df1['region'] == j) & (df1['is_weekday']  == w)
+                    k.loc[(k.index.hour == i) & (k['region'] == j) & (k['is_weekday'] == w), 'lower'] = \
+                    mean_confidence_interval(df1.loc[filt, traf])[1]
+                    k.loc[(k.index.hour == i) & (k['region'] == j) & (k['is_weekday']  == w), 'upper'] = \
+                    mean_confidence_interval(df1.loc[filt, traf])[2]
+
+        k.loc[:, 'region2'] = le.fit_transform(k['region'])
+        k.loc[:, 'predict'] = model.predict(k[['hour', 'is_weekday', 'day', 'region2']])
+        k.loc[:, 'tech'] = techs[tech]
+        df_test.loc[:, 'tech'] = techs[tech]
+        k.loc[:, 'kpi'] = traf
+        df_test.loc[:, 'kpi'] = traf
+        conf_int = k['upper'] - k['lower']
+        k.loc[:, 'lower'] = k['predict'] - conf_int / 2
+        k.loc[:, 'upper'] = k['predict'] + conf_int / 2
+        # print(df_test[df_test.index >=for_graph].rename(columns={'cs traf':'traf','data traf':'traf'}).head())
+        k = k.append(df_test[df_test.index >= for_graph].rename(columns={'cs traf': 'traf', 'data traf': 'traf'}))
+        k.reset_index(inplace=True)
+        if (techs[tech] == '2G') and (traf == 'cs traf'):
+            k.to_csv(r'/home/ismayil/flask_dash/support_files/anomality_detection/daily_traffic_check.csv', index=False)
+        else:
+            k.to_csv(r'/home/ismayil/flask_dash/support_files/anomality_detection/daily_traffic_check.csv', mode='a',
+                     header=False, index=False)
+
+
+############# to remove tx files #####################
+#os.chdir('/disk2/support_files/archive/tx')
+#for i in os.listdir():
+#    if datetime.datetime.strptime(i[3:-3],'%d.%m.%Y')<datetime.datetime.today()-datetime.timedelta(31):
+#        os.remove(i)

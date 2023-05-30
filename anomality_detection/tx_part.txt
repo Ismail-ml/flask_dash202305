@@ -1,0 +1,158 @@
+import pandas as pd
+import os
+import datetime
+import numpy as np
+import time
+
+time.sleep(40)
+c1 = time.time()
+
+os.chdir('/home/ismayil/flask_dash/data/tx')
+with open('last_file.txt') as f:
+    needed = f.readline()
+needed_hour = datetime.datetime.strftime(datetime.datetime.strptime(needed, '%Y%m%d%H%M'), '%Y-%m-%d %H:%M')
+needed_day = datetime.datetime.strftime(datetime.datetime.strptime(needed, '%Y%m%d%H%M'), '%d.%m.%Y')
+
+all_cols = {'IGRTN': ['PORT_TX_BW_UTILIZATION', 'PORT_RX_BW_UTILIZATION_AVG', 'PORT_RX_BW_UTILIZATION_MAX',
+                      'PORT_TX_BW_UTILIZATION_MAX', 'IF_BBE', 'IF_ES', 'RSL_AVG','TSL_AVG',
+                      'IF_SES', 'IF_UAS',
+                      'QPSKWS', 'QAMWS16', 'QAMWS32', 'QAMWS64', 'QAMWS128', 'QAMWS256'],
+
+            'IG27': ['Inbound Bandwidth Utilization', 'Outbound Bandwidth Utilization',
+                     'Outbound Discarded Packet Rate',
+                     'Inbound Discarded Packet Ratio', 'Outbound Discarded Packet Ratio', 'Inbound Error Packet Rate',
+                     'Outbound Error Packet Rate', 'Inbound Error Packet Ratio', 'Outbound Error Packet Ratio',
+                     'Inbound Discarded Packet', 'Inbound Error Packet', 'Outbound Discarded Packet',
+                     'Outbound Error Packet',
+                     'IPv4 Error Packet Header Rate', 'IPv4 Outbound Packet Rate', 'Inbound CRC Error Packets',
+                     'Inbound Fragment Error Packets', 'Inbound Over Flow  Packets', 'Outbound Over Flow  Packets',
+                     'Max Bandwidth Utilization'],
+
+            'IG30014': ['TX_DROP_PKTS', 'RX_DROP_PKTS', 'RXBBAD', 'TXBBAD', 'RX_DROP_RATIO', 'TX_DROP_RATIO'],
+
+            'IG30024': ['TLBCUR', 'TPLCUR', 'RPLCUR'],
+
+            'IG30029': ['QAMWS512', 'QAMWS1024', 'IF_BER', 'QAMWS2048'],
+
+            'IG41022': ['RXBBAD', 'TXBBAD', 'RX_DROP_RATIO', 'TX_DROP_RATIO', 'RXPAUSE', 'TXPAUSE'],
+
+            'IGMSTP': ['PORT_RX_BW_UTILIZATION', 'PORT_TX_BW_UTILIZATION', 'ETHDROP']
+
+            }
+
+comb = []
+# for_plot=[]
+for f in ['IG27', 'IG30014', 'IG30024', 'IG30029', 'IG41022', 'IGMSTP', 'IGRTN']:
+    try:
+       df = pd.read_hdf('/disk2/support_files/archive/tx/tx_' + needed_day + '.h5', f, where='CollectionTime==needed_hour')
+       files = pd.date_range(end=df['CollectionTime'].iloc[-1] - datetime.timedelta(1), periods=15, freq='24H').strftime(
+        "%d.%m.%Y").tolist()
+       hour = df['CollectionTime'].iloc[-1].strftime("%H:%M")
+       cols = all_cols[f]
+       h = []
+       for i in files:
+           if os.path.isfile(os.path.join('/disk2/support_files/archive/tx','tx_'+i+'.h5')):
+               t = datetime.datetime.strptime(i + " " + hour, "%d.%m.%Y %H:%M")
+               h.append(pd.read_hdf('/disk2/support_files/archive/tx/tx_' + i + '.h5', f, where='CollectionTime==t'))
+           else: continue
+       ready = pd.concat(h)
+       Q1 = ready.groupby('ResourceName').mean()[cols]
+       Q3 = ready.groupby('ResourceName').std()[cols]
+       filt = [i for i in Q1.columns if
+            (('TSL' in i) | ('RSL' in i) | ('LCUR' in i) | ('IF_SNR' in i) | ('IF_MSE' in i))]
+       df_filt = df[['DeviceName', 'ResourceName', 'CollectionTime'] + cols]
+       merged = df_filt.melt(id_vars=df_filt.columns[:3], value_vars=df_filt.columns[3:]).merge(
+        Q1.reset_index().melt(id_vars='ResourceName', value_name='Q1'), how='left', on=['ResourceName', 'variable'])
+       merged = merged.merge(Q3.reset_index().melt(id_vars='ResourceName', value_name='Q3'),
+                          on=['ResourceName', 'variable'], how='left')
+       merged['status'] = 0
+       merged.loc[((merged['value'] > (merged['Q1'] + 3 * merged['Q3'])) & (
+        ~merged['variable'].isin(filt)) & (merged['Q3']!=0)), 'status'] = -1
+       merged.loc[((merged['value'] > (merged['Q1'] + 3 *merged['Q3'] )) & (
+        merged['variable'].isin(filt)) & (merged['Q3']!=0)), 'status'] = -1
+       merged.loc[((merged['value'] < (merged['Q1'] - 3 * merged['Q3'] )) & (
+        merged['variable'].isin(filt)) & (merged['Q3']!=0)), 'status'] = 1
+       merged.loc[(merged['value'] < 60) & (merged['variable'].str.contains('UTILIZATION')), 'status'] = 0
+       merged.loc[(merged['value'] < 60) & (merged['variable'].str.contains('Utilization')), 'status'] = 0
+       merged.loc[
+        ((abs(abs(merged['value']) - abs(merged['Q1'])) < 2) & (merged['variable'].str.contains('RSL'))) |
+        ((merged['value']>-45) & (merged['value']>=merged['Q1']) & (merged['variable'].str.contains('RSL'))), 'status'] = 0
+       merged.loc[
+        ((abs(abs(merged['value']) - abs(merged['Q1'])) < 2) & (merged['variable'].str.contains('TSL'))) |
+        ((merged['value']>=merged['Q1']) & (merged['variable'].str.contains('TSL'))), 'status'] = 0
+       merged.loc[
+        (abs(abs(merged['value']) - abs(merged['Q1'])) < 2) & (merged['variable'].str.contains('RPL') | merged['variable'].str.contains('TLB') |
+        merged['variable'].str.contains('TPL')), 'status'] = 0
+       merged.loc[
+        (abs(abs(merged['value']) - abs(merged['Q1'])) < 2) & (merged['variable'].str.contains('IF_MSE')), 'status'] = 0
+       merged.loc[
+        (abs(abs(merged['value']) - abs(merged['Q1'])) < 2) & (merged['variable'].str.contains('IF_SNR')), 'status'] = 0
+       merged.loc[:, 'delta'] = round(
+        (merged['value'] - merged['Q1']) / merged['Q1'] * 100, 2)
+       merged['delta'].replace(np.inf, -2, inplace=True)
+       merged.insert(0, 'file', f)
+    # ready_plot=ready[['DeviceName','ResourceName','CollectionTime']+cols].melt(id_vars=df_filt.columns[:3], value_vars=df_filt.columns[3:])
+    # ready_plot.insert(0,'file',f)
+    # for_plot.append(merged.append(ready_plot))
+       comb.append(merged[merged['status'] != 0])
+    except Exception as e:
+       print(e,f)
+       continue
+print('loop finished in ', time.time() - c1)
+combed = pd.concat(comb)
+combed=combed.drop_duplicates()
+# pd.concat(for_plot).to_hdf('/disk2/support_files/archive/anomalies.h5', '/tx_trend',
+#                         format='table', complevel=5, data_columns=merged.columns)
+if len(combed)>0:
+    combed.to_csv('/home/ismayil/flask_dash/support_files/anomality_detection/tx_anomalies.csv', index=False)
+    # combed.to_hdf('/disk2/support_files/archive/anomalies.h5', '/tx_level',
+    #                     format='table', data_columns=combed.columns, complevel=5)
+    print('append finished')
+    if os.path.exists('/home/ismayil/flask_dash/support_files/anomality_detection/tx_ongoing_anomalies.csv'):
+        anomalies = pd.read_csv('/home/ismayil/flask_dash/support_files/anomality_detection/tx_ongoing_anomalies.csv')
+        anomalies = combed.merge(anomalies[['ResourceName', 'variable', 'status', 'c_days']],
+                            on=['ResourceName', 'variable'], how='left')
+    else:
+        anomalies=combed
+        anomalies['c_days']=0
+        anomalies['status_y']=0
+        anomalies.rename(columns={'status':'status_x'},inplace=True)
+    anomalies.loc[anomalies['c_days'].notnull(), 'c_days'] += 1
+    anomalies.loc[anomalies['c_days'].isnull(), 'c_days'] = 1
+    anomalies.rename(columns={'status_x': 'status'}, inplace=True)
+    anomalies.drop(columns='status_y', inplace=True)
+    anomalies=anomalies.drop_duplicates()
+    anomalies.to_csv('/home/ismayil/flask_dash/support_files/anomality_detection/tx_ongoing_anomalies.csv', index=False)
+    temp_dict={'DeviceName': 40, 'ResourceName': 40}
+    for n in temp_dict.keys():
+        anomalies[n]=anomalies[n].apply(lambda x: x[:temp_dict[n]] if len(x)>temp_dict[n] else x)
+    anomalies.to_hdf(
+        '/disk2/support_files/archive/anomality/' + anomalies['CollectionTime'][0].strftime(
+            "%B_%Y") + '_anomalies.h5', '/tx',
+        append=True, format='table', data_columns=anomalies.columns, complevel=5,
+        min_itemsize={'DeviceName': 40, 'ResourceName': 40, 'variable': 25, 'value': 15, 'Q1': 15, 'Q3': 15, 'delta': 15})
+else:
+    if os.path.exists('/home/ismayil/flask_dash/support_files/anomality_detection/tx_ongoing_anomalies.csv'):
+        anomalies=combed
+        anomalies['c_days']=0
+        anomalies.to_csv('/home/ismayil/flask_dash/support_files/anomality_detection/tx_ongoing_anomalies.csv', index=False)
+
+try:
+    df=pd.read_excel('/home/ismayil/flask_dash/support_files/anomality_detection/protection_links_rtn_part.xlsx',sheet_name='Sheet2')
+    df2=pd.DataFrame(pd.concat([df.iloc[:,0],df.iloc[:,1]],ignore_index=True))
+    df3 = anomalies.copy()
+    df3=df3.merge(df2,left_on='DeviceName',right_on=df2.columns[0],how='left')
+    df3=df3[df3[0].notnull()]
+    if len(df3)>0:
+        df3.rename(columns={'Q1':'15_day_average','Q3':'15_day_standard_deviation','c_days':'ongoing_15_period','variable':'KPI'},inplace=True)
+        df3['status'].replace({1:'above threshold',2:'below threshold'},regex=True,inplace=True)
+        df3=df3[['DeviceName','ResourceName','CollectionTime','KPI','value','15_day_average','15_day_standard_deviation','ongoing_period']]
+        from send_notification import send_mail
+        required=datetime.datetime.utcfromtimestamp(df3['CollectionTime'].values[0].item() / 10**9).strftime('%d.%m.%Y %H:%M')
+        send_mail(['khataia@azerconnect.az','abdulhalims@azerconnect.az','ismayilm@azerconnect.az'],
+                                    'Performance alarm on Protection links','Performance alarms observed on below links on last period',
+                                    round(df3.sort_values(by='ongoing_period',ascending=False),0),
+                                    required,False)
+except Exception as e:
+    print(e,' error during protection link check')
+    1
